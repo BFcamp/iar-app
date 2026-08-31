@@ -49,6 +49,13 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
   font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;
 }
 .count{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink2)}
+.top-r{display:flex;align-items:baseline;gap:10px}
+.auth-btn{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink3);
+  border:1px solid var(--line);border-radius:12px;padding:3px 10px;background:var(--card);
+  max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.auth-btn.on{color:var(--tag);border-color:#A9C0D6}
 /* tira de control: un tick por pregunta */
 .strip{display:flex;gap:2px;margin:9px 0 8px;height:5px}
 .tick{flex:1;background:#D3DAE0;border-radius:1px;transition:background .25s}
@@ -471,7 +478,10 @@ h1{
   <div class="top-in">
     <div class="top-row">
       <span class="brand">Repaso IAR</span>
-      <span class="count" id="count"></span>
+      <div class="top-r">
+        <span class="count" id="count"></span>
+        <button class="auth-btn" id="btn-auth" hidden>Iniciar sesión</button>
+      </div>
     </div>
     <nav class="tabs" id="tabs">
       <button class="tab" data-go="practicar" aria-pressed="true">Practicar</button>
@@ -552,6 +562,7 @@ h1{
 
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // Banco de preguntas IAR
 // caso: ==texto== = resaltador   `texto` = valor de laboratorio (monoespaciado)
@@ -2880,11 +2891,25 @@ const sesion = [];              // [{id,area,tipo,acierto}]
 const $ = s => document.querySelector(s);
 const uniq = k => [...new Set(BANCO.map(q => q[k]))];
 
+/* ═══ Supabase (sincronización en la nube) ═══
+   Si hay sesión iniciada, el progreso/notas/espacio se leen y escriben ahí.
+   Sin sesión, se usa el storage local de siempre (ver más abajo).
+   La anon key es pública por diseño: el acceso real lo controlan las
+   políticas RLS de cada tabla (auth.uid() = user_id).
+*/
+const SUPABASE_URL = 'https://ovngisrvygbzuamikguz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92bmdpc3J2eWdienVhbWlrZ3V6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxNDk1MzgsImV4cCI6MjEwMzcyNTUzOH0.8CtDdBq_mNo-DZyRlKG0kQhajdQPsKiIeGgufl4C0NY';
+const sb = (typeof window.supabase !== 'undefined' && SUPABASE_URL && SUPABASE_ANON_KEY)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+let sbSesion = null;   // sesión de Supabase actual (o null si no hay)
+
 /* ═══ persistencia ═══
-   Un solo archivo, tres entornos posibles:
-   1. artefacto de Claude  → window.storage (localStorage está bloqueado)
-   2. GitHub Pages / navegador → localStorage (no hace falta servidor)
-   3. sin ninguno de los dos → memoria, se pierde al cerrar
+   Un solo archivo, cuatro entornos posibles:
+   1. sesión Supabase activa → Supabase (progreso, notas_regla, carpetas, paginas, referencias, enlaces)
+   2. artefacto de Claude  → window.storage (localStorage está bloqueado)
+   3. GitHub Pages / navegador → localStorage (no hace falta servidor)
+   4. ninguno de los anteriores → memoria, se pierde al cerrar
 */
 const KEY = 'iar-stats';
 let DEPOSITO = 'memoria';
@@ -2911,7 +2936,6 @@ const Store = {
         if(ok) DEPOSITO = 'local';
       }catch(e){}
     }
-    console.log('[iar] almacenamiento detectado:', DEPOSITO);
   },
   async leer(k){
     k = k || KEY;
@@ -2932,15 +2956,24 @@ const Store = {
   }
 };
 
+function logCarga(){
+  console.log('[iar] almacenamiento detectado:', DEPOSITO);
+  console.log('[iar] preguntas con progreso restauradas desde "' + DEPOSITO + '":',
+    Object.keys(stats).length, 'de', BANCO.length);
+}
 async function cargar(){
   if(DEPOSITO === 'memoria') await Store.detectar();
   const txt = await Store.leer();
   if(txt){ try{ stats = JSON.parse(txt); }catch(e){ stats = {}; } }
-  console.log('[iar] preguntas con progreso restauradas desde "' + DEPOSITO + '":',
-    Object.keys(stats).length, 'de', BANCO.length);
+  logCarga();
   pintarEstado();
 }
 async function guardar(){
+  if(DEPOSITO === 'supabase'){
+    const ok = await guardarProgresoRemoto();
+    marcarEstado(ok, ok ? null : 'no se pudo sincronizar con Supabase');
+    return;
+  }
   try{
     await Store.escribir(JSON.stringify(stats));
     marcarEstado(true);
@@ -2948,10 +2981,15 @@ async function guardar(){
     marcarEstado(false, e.message || String(e));
   }
 }
+async function guardarNota(id, texto){
+  if(DEPOSITO === 'supabase') return guardarNotaRemota(id, texto);
+  return guardar();   // en local/memoria la nota va adentro del mismo bloque de stats
+}
 
 function pintarEstado(){
   const vistas = Object.keys(stats).length;
   const donde = {
+    supabase: 'sincronizado con tu cuenta' + (sbSesion ? ' (' + sbSesion.user.email + ')' : ''),
     claude:  'progreso guardado en este chat',
     local:   'progreso guardado en este navegador',
     memoria: 'sin guardado: el progreso se pierde al cerrar'
@@ -2981,10 +3019,265 @@ async function resetear(){
   const ok = await confirmar('Se va a borrar todo el progreso de práctica. '
     + 'Las notas y carpetas del espacio no se tocan.');
   if(!ok) return;
+  // las notas por pregunta no son "progreso": se preservan tal cual lo dice el aviso
+  const notasPrevias = {};
+  Object.entries(stats).forEach(([id, s]) => { if(s.nota) notasPrevias[id] = s.nota; });
   stats = {};
+  Object.entries(notasPrevias).forEach(([id, nota]) => {
+    stats[id] = {seen:0, ok:0, flag:false, nota};
+  });
   await guardar();
   pintarChips();
   pintarEstado();
+}
+
+/* ═══ Supabase: lectura/escritura de progreso y notas ═══
+   progreso.datos guarda el mismo objeto "stats" pero sin el campo "nota"
+   (las notas viven aparte, en notas_regla, para poder guardarlas con su
+   propio debounce sin reescribir todo el progreso en cada tecla).
+*/
+function uuidV4(){
+  if(crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+function esUUID(s){
+  return typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+}
+async function guardarProgresoRemoto(){
+  if(!sbSesion) return false;
+  const limpio = {};
+  Object.entries(stats).forEach(([id, s]) => {
+    const { nota, ...resto } = s;
+    limpio[id] = resto;
+  });
+  const { error } = await sb.from('progreso').upsert({
+    user_id: sbSesion.user.id, datos: limpio, actualizado: new Date().toISOString()
+  }, { onConflict: 'user_id' });
+  if(error) console.error('[iar] no se pudo guardar el progreso en Supabase:', error);
+  return !error;
+}
+async function guardarNotaRemota(reglaId, texto){
+  if(!sbSesion) return false;
+  const { error } = await sb.from('notas_regla').upsert({
+    user_id: sbSesion.user.id, regla_id: reglaId, texto, actualizado: new Date().toISOString()
+  }, { onConflict: 'user_id,regla_id' });
+  if(error) console.error('[iar] no se pudo guardar la nota en Supabase:', error);
+  marcarEstado(!error, error ? 'no se pudo guardar la nota' : null);
+  return !error;
+}
+async function sembrarNotasRemoto(){
+  const filas = Object.entries(stats)
+    .filter(([, s]) => s.nota)
+    .map(([id, s]) => ({
+      user_id: sbSesion.user.id, regla_id: id, texto: s.nota, actualizado: new Date().toISOString()
+    }));
+  if(!filas.length) return;
+  const { error } = await sb.from('notas_regla').upsert(filas, { onConflict: 'user_id,regla_id' });
+  if(error) console.error('[iar] no se pudieron sembrar las notas en Supabase:', error);
+}
+
+/* ═══ Supabase: árbol del espacio de trabajo ═══
+   carpeta → carpetas · nota/indice → paginas · ref → referencias
+   Los ids locales pasan a ser uuid en cuanto hay sesión (nuevoId() más abajo),
+   así no hace falta llevar un mapa aparte entre id local e id remoto.
+   Los enlaces [[...]] entre páginas se recalculan enteros en cada guardado.
+*/
+function nombreRef(tipo, refId){
+  if(tipo === 'r'){
+    const r = REGLAS.find(x => x.id === refId);
+    return r ? r.titulo : '(regla borrada)';
+  }
+  const q = BANCO.find(x => x.id === refId);
+  return q ? q.caso.replace(/[=`]/g,'').slice(0,90) + '…' : '(pregunta borrada)';
+}
+function migrarIdsAUuid(){
+  // primera vez que este dispositivo sincroniza: los ids "n1a2b3c" locales
+  // no sirven como uuid, así que se cambian antes de subir el árbol
+  const cambios = {};
+  Object.keys(ESP.nodos).forEach(id => { if(!esUUID(id)) cambios[id] = uuidV4(); });
+  if(!Object.keys(cambios).length) return;
+  const nuevos = {};
+  Object.entries(ESP.nodos).forEach(([id, n]) => {
+    nuevos[cambios[id] || id] = { ...n, padre: cambios[n.padre] || n.padre };
+  });
+  ESP.nodos = nuevos;
+  ruta = ruta.map(r => cambios[r] || r);
+}
+async function guardarEspacioRemoto(){
+  if(!sbSesion) return false;
+  const uid = sbSesion.user.id;
+  const padreId = p => (!p || p === 'raiz') ? null : p;
+
+  const ahora = new Date().toISOString();
+  const carpetas = [], paginas = [], referencias = [];
+  Object.entries(ESP.nodos).forEach(([id, n]) => {
+    if(n.tipo === 'carpeta')
+      carpetas.push({ id, user_id: uid, nombre: n.nom, padre_id: padreId(n.padre), orden: n.orden || 0, actualizado: ahora });
+    else if(n.tipo === 'nota' || n.tipo === 'indice')
+      paginas.push({ id, user_id: uid, carpeta_id: padreId(n.padre), titulo: n.nom, contenido: n.cuerpo || '', orden: n.orden || 0, actualizado: ahora });
+    else if(n.tipo === 'ref')
+      referencias.push({ id, user_id: uid, carpeta_id: padreId(n.padre), tipo: n.clase, ref_id: n.refId, orden: n.orden || 0, actualizado: ahora });
+  });
+
+  const idsPagina = new Set(paginas.map(p => p.id));
+  const enlaces = [];
+  paginas.forEach(p => {
+    const vistos = new Set();
+    [...(p.contenido || '').matchAll(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g)].forEach(m => {
+      const destId = porNombre(m[1]);
+      if(destId && idsPagina.has(destId) && destId !== p.id && !vistos.has(destId)){
+        vistos.add(destId);
+        enlaces.push({ user_id: uid, origen_id: p.id, destino_id: destId, actualizado: ahora });
+      }
+    });
+  });
+
+  try{
+    // las carpetas se suben en dos pasadas (primero sin padre_id) para no
+    // depender del orden en que aparecen padre e hijo dentro del mismo lote
+    if(carpetas.length){
+      const sinPadre = carpetas.map(c => ({ ...c, padre_id: null }));
+      let r = await sb.from('carpetas').upsert(sinPadre); if(r.error) throw r.error;
+      r = await sb.from('carpetas').upsert(carpetas); if(r.error) throw r.error;
+    }
+    if(paginas.length){
+      const { error } = await sb.from('paginas').upsert(paginas); if(error) throw error;
+    }
+    if(referencias.length){
+      const { error } = await sb.from('referencias').upsert(referencias); if(error) throw error;
+    }
+
+    // limpiar en remoto lo que ya no existe localmente
+    const idsLocales = new Set(Object.keys(ESP.nodos));
+    const [{data: remCarp}, {data: remPag}, {data: remRef}] = await Promise.all([
+      sb.from('carpetas').select('id').eq('user_id', uid),
+      sb.from('paginas').select('id').eq('user_id', uid),
+      sb.from('referencias').select('id').eq('user_id', uid),
+    ]);
+    const sobranRef  = (remRef  || []).map(r => r.id).filter(id => !idsLocales.has(id));
+    const sobranPag  = (remPag  || []).map(r => r.id).filter(id => !idsLocales.has(id));
+    const sobranCarp = (remCarp || []).map(r => r.id).filter(id => !idsLocales.has(id));
+    if(sobranRef.length) await sb.from('referencias').delete().in('id', sobranRef);
+    if(sobranPag.length) await sb.from('paginas').delete().in('id', sobranPag);
+    if(sobranCarp.length){
+      await sb.from('carpetas').update({ padre_id: null }).in('id', sobranCarp);
+      await sb.from('carpetas').delete().in('id', sobranCarp);
+    }
+
+    // enlaces: no tienen id propio, se reescriben enteros
+    await sb.from('enlaces').delete().eq('user_id', uid);
+    if(enlaces.length){
+      const { error } = await sb.from('enlaces').insert(enlaces); if(error) throw error;
+    }
+
+    marcarEstado(true);
+    return true;
+  }catch(err){
+    console.error('[iar] no se pudo sincronizar el espacio con Supabase:', err);
+    marcarEstado(false, 'no se pudo guardar el espacio en la nube');
+    return false;
+  }
+}
+async function cargarEspacioDeSupabase(){
+  const uid = sbSesion.user.id;
+  const [{data: cs}, {data: ps}, {data: rs}] = await Promise.all([
+    sb.from('carpetas').select('*').eq('user_id', uid),
+    sb.from('paginas').select('*').eq('user_id', uid),
+    sb.from('referencias').select('*').eq('user_id', uid),
+  ]);
+  const nodos = {};
+  (cs || []).forEach(c => nodos[c.id] = {
+    tipo:'carpeta', nom:c.nombre, padre:c.padre_id || 'raiz', cuerpo:'', orden:c.orden || 0
+  });
+  (ps || []).forEach(p => nodos[p.id] = {
+    tipo:'nota', nom:p.titulo, padre:p.carpeta_id || 'raiz', cuerpo:p.contenido || '', orden:p.orden || 0
+  });
+  (rs || []).forEach(r => nodos[r.id] = {
+    tipo:'ref', clase:r.tipo, refId:r.ref_id, nom:nombreRef(r.tipo, r.ref_id),
+    padre:r.carpeta_id || 'raiz', orden:r.orden || 0
+  });
+  return { nodos, hayAlgo: !!((cs && cs.length) || (ps && ps.length) || (rs && rs.length)) };
+}
+
+/* ═══ Supabase: orquesta la sincronización al iniciar/cerrar sesión ═══
+   Si la nube ya tiene datos, gana la nube (es la fuente de verdad de la
+   cuenta). Si la nube está vacía, lo que había local se sube como semilla.
+*/
+async function sincronizarDesdeSupabase(){
+  try{
+    const uid = sbSesion.user.id;
+    const [{data: prog, error: e1}, {data: notas, error: e2}] = await Promise.all([
+      sb.from('progreso').select('datos').eq('user_id', uid).maybeSingle(),
+      sb.from('notas_regla').select('regla_id, texto').eq('user_id', uid),
+    ]);
+    if(e1) throw e1; if(e2) throw e2;
+
+    const hayProgresoRemoto = !!(prog && prog.datos && Object.keys(prog.datos).length) || !!(notas && notas.length);
+    if(hayProgresoRemoto){
+      stats = (prog && prog.datos) ? JSON.parse(JSON.stringify(prog.datos)) : {};
+      (notas || []).forEach(n => {
+        stats[n.regla_id] = stats[n.regla_id] || {seen:0, ok:0, flag:false};
+        stats[n.regla_id].nota = n.texto;
+      });
+    } else {
+      await guardarProgresoRemoto();
+      await sembrarNotasRemoto();
+    }
+
+    const espRemoto = await cargarEspacioDeSupabase();
+    if(espRemoto.hayAlgo){
+      ESP = { nodos: espRemoto.nodos };
+      ruta = ['raiz']; vista = 'lista';
+    } else {
+      migrarIdsAUuid();
+      await guardarEspacioRemoto();
+    }
+
+    logCarga();
+    marcarEstado(true);
+  }catch(err){
+    console.error('[iar] error sincronizando con Supabase:', err);
+    marcarEstado(false, 'no se pudo sincronizar con la nube; se usa el guardado local');
+    DEPOSITO = 'memoria';
+    await Store.detectar();
+    await cargar();
+    await cargarEspacio();
+  }
+}
+
+/* ═══ Supabase: login por magic link ═══ */
+function pintarAuth(){
+  const b = $('#btn-auth');
+  if(!sb){ b.hidden = true; return; }
+  b.hidden = false;
+  if(sbSesion){
+    b.textContent = sbSesion.user.email;
+    b.title = 'Cerrar sesión (el progreso queda guardado en la nube)';
+    b.classList.add('on');
+  } else {
+    b.textContent = 'Iniciar sesión';
+    b.title = 'Sincronizar el progreso con tu cuenta';
+    b.classList.remove('on');
+  }
+}
+async function manejarSesion(session){
+  sbSesion = session;
+  pintarAuth();
+  if(session){
+    DEPOSITO = 'supabase';
+    await sincronizarDesdeSupabase();
+  } else if(DEPOSITO === 'supabase' || DEPOSITO === 'memoria'){
+    DEPOSITO = 'memoria';
+    await Store.detectar();
+    await cargar();
+    await cargarEspacio();
+  }
+  pintarChips(); pintarEstado();
+  const activa = document.querySelector('.tab[aria-pressed="true"]');
+  if(activa && activa.dataset.go === 'espacio'){ pintarEspacio(); }
 }
 
 /* ═══ filtros ═══ */
@@ -3206,7 +3499,8 @@ function resolver(){
     const s = stats[q.id] = stats[q.id] || {seen:0, ok:0, flag:false};
     s.nota = e.target.value;
     clearTimeout(notaTimer);
-    notaTimer = setTimeout(guardar, 500);
+    // debounce de ~2s: evita una escritura (sobre todo a Supabase) por cada tecla
+    notaTimer = setTimeout(() => guardarNota(q.id, s.nota), 2000);
   };
 
   // registro
@@ -3237,7 +3531,12 @@ function centrarEnCorrectas(){
 }
 function avanzar(){
   clearTimeout(notaTimer);
+  const actual = mazo[i];
   guardar();
+  // si quedó una nota tipeada sin flushear por el debounce, se guarda ya
+  if(actual && stats[actual.id] && stats[actual.id].nota !== undefined){
+    guardarNota(actual.id, stats[actual.id].nota);
+  }
   if(i + 1 < mazo.length){ i++; mostrar(); window.scrollTo({top:0}); }
   else cerrar();
 }
@@ -3371,14 +3670,18 @@ let ESP = { nodos: {} };        // id -> {tipo, nom, padre, cuerpo, refId, orden
 let ruta = ['raiz'], vista = 'lista', editando = null, marcados = new Set();
 
 async function cargarEspacio(){
+  if(DEPOSITO === 'supabase') return;   // ya se cargó en sincronizarDesdeSupabase()
   const t = await Store.leer('iar-espacio');
   if(t){ try{ ESP = JSON.parse(t); }catch(e){} }
   if(!ESP.nodos) ESP.nodos = {};
 }
 async function guardarEspacio(){
+  if(DEPOSITO === 'supabase'){ await guardarEspacioRemoto(); return; }
   try{ await Store.escribir(JSON.stringify(ESP), 'iar-espacio'); }catch(e){}
 }
-const nuevoId = () => 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const nuevoId = () => DEPOSITO === 'supabase'
+  ? uuidV4()
+  : 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
 const hijosDe = p => Object.entries(ESP.nodos)
   .filter(([, n]) => n.padre === p)
   .sort((a, b) => (a[1].orden || 0) - (b[1].orden || 0))
@@ -3816,8 +4119,31 @@ $('#btn-again').onclick = () => {
   const activa = document.querySelector('.tab[aria-pressed="true"]').dataset.go;
   irA(activa);
 };
+
+/* ═══ botón de sesión (magic link) ═══ */
+$('#btn-auth').onclick = async () => {
+  if(sbSesion){
+    const ok = await confirmar('¿Cerrar sesión de ' + sbSesion.user.email + '? '
+      + 'El progreso ya sincronizado queda guardado en la nube.', 'Cerrar sesión');
+    if(ok) await sb.auth.signOut();
+    return;
+  }
+  const email = await pedirTexto('Ingresá tu email para recibir el enlace de acceso');
+  if(!email) return;
+  const { error } = await sb.auth.signInWithOtp({
+    email, options: { emailRedirectTo: location.href.split('#')[0] }
+  });
+  toast(error ? 'No se pudo enviar el enlace' : 'Revisá tu correo: te mandamos un enlace de acceso');
+};
+
+/* ═══ init ═══ */
 pintarChips();
-cargar().then(cargarEspacio);
+if(sb){
+  sb.auth.onAuthStateChange((_evento, session) => manejarSesion(session));
+} else {
+  pintarAuth();
+  cargar().then(cargarEspacio);
+}
 </script>
 </body>
 </html>
