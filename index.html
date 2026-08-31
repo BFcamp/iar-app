@@ -154,6 +154,117 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
   color:var(--ok);margin-bottom:3px;
 }
 
+/* ── espacio de trabajo ── */
+.crumb{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:13px;margin-bottom:14px;min-height:18px}
+.crumb button{color:var(--tag);font-weight:600;font-size:13px;padding:0}
+.crumb .sep{color:var(--ink3)}
+.crumb .cur{color:var(--ink2);font-weight:600}
+
+.row{display:flex;align-items:flex-start;gap:11px;width:100%;padding:12px 0;
+  border-bottom:1px solid var(--line);text-align:left}
+.row .ic{flex:0 0 auto;width:17px;margin-top:2px;color:var(--ink3)}
+.row .nm{flex:1;font-size:16px;line-height:1.35}
+.row .nm small{display:block;color:var(--ink3);font-size:12.5px;margin-top:2px;
+  font-family:'IBM Plex Mono',monospace}
+.row .ar{width:7px;height:7px;border-right:1.5px solid #B3BDC6;border-bottom:1.5px solid #B3BDC6;
+  transform:rotate(-45deg);margin-top:8px;flex:0 0 auto}
+.row.ref .nm{color:var(--ink2)}
+.mover{display:flex;flex-direction:column;gap:2px;flex:0 0 auto}
+.mv{font-size:10px;line-height:1;color:#B3BDC6;padding:3px 5px;border:1px solid var(--line);
+  border-radius:2px;background:var(--card)}
+
+.acts{display:flex;gap:7px;flex-wrap:wrap;margin-top:20px}
+.act{border:1px solid var(--line);background:var(--card);padding:9px 13px;border-radius:var(--r);
+  font-size:13.5px;font-weight:600;color:var(--ink2)}
+.act.pri{background:var(--ink);border-color:var(--ink);color:#fff}
+.act.del{color:var(--pen);border-color:#E8C4C9}
+
+.vacio{text-align:center;padding:44px 16px 26px}
+.vacio .fig{width:52px;height:52px;margin:0 auto 15px;border:2px dashed var(--line);border-radius:5px}
+.vacio h2{font-size:20px;margin:0 0 7px;font-weight:700}
+.vacio p{font-family:'IBM Plex Serif',serif;color:var(--ink2);font-size:15px;
+  margin:0 auto;max-width:330px;line-height:1.55}
+.vacio .acts{justify-content:center;margin-top:20px}
+
+.doc{font-family:'IBM Plex Serif',serif;font-size:16px;line-height:1.68;color:#1B2731}
+.doc p{margin:0 0 14px}
+.doc ul{margin:0 0 14px;padding-left:20px}
+.lk{color:var(--tag);border-bottom:1px solid #A9C0D6;font-family:inherit;font-size:inherit;padding:0}
+.lk.rf{color:#6B4E9E;border-bottom-color:#C3B2DE}
+.lk.roto{color:var(--ink3);border-bottom-style:dotted;cursor:default}
+
+.ed{width:100%;font-family:'IBM Plex Serif',serif;font-size:16px;line-height:1.6;
+  border:1px solid var(--line);border-radius:var(--r);padding:13px;background:var(--card);
+  color:var(--ink);min-height:230px;resize:vertical}
+.ed-nom{width:100%;font-family:'IBM Plex Sans Condensed',sans-serif;font-size:21px;font-weight:700;
+  border:none;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);
+  padding:0 0 8px;margin-bottom:14px}
+.ayuda{font-size:12.5px;color:var(--ink3);margin:8px 0 0;line-height:1.5}
+
+.back{border-top:1px solid var(--line);margin-top:30px;padding-top:15px}
+.back b{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink3);margin-bottom:8px}
+.bl{display:block;width:100%;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px;text-align:left}
+.bl small{display:block;font-family:'IBM Plex Serif',serif;color:var(--ink3);font-size:13px;margin-top:2px}
+
+.pick{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;margin-top:8px;max-height:60vh;overflow-y:auto}
+.pick .i{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;
+  border-bottom:1px solid var(--line);font-size:14.5px;width:100%;text-align:left;line-height:1.35}
+.pick .i:last-child{border-bottom:none}
+.box{width:17px;height:17px;border:1.5px solid var(--ink3);border-radius:2px;flex:0 0 auto;margin-top:1px}
+.box.on{background:var(--ink);border-color:var(--ink);position:relative}
+.box.on:after{content:'';position:absolute;left:5px;top:1px;width:4px;height:9px;
+  border-right:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(42deg)}
+.mini-ty{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;
+  text-transform:uppercase;padding:2px 5px;border-radius:2px;flex:0 0 auto;margin-top:1px}
+.mini-ty.r{background:#FDF3B8;color:#5C4A00}
+.mini-ty.p{background:#DCE6EF;color:var(--tag)}
+
+.caso-ro{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--tag);
+  border-radius:var(--r);padding:14px 15px;margin-bottom:14px;font-size:15px;line-height:1.6}
+.ops-ro{list-style:none;padding:0;margin:0 0 14px}
+.ops-ro li{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:15px;padding:9px 12px;
+  border:1px solid var(--line);border-radius:var(--r);background:var(--card);
+  margin-bottom:5px;color:var(--ink2)}
+.ops-ro li.buena{border-color:var(--ok);background:var(--okbg);color:var(--ok);font-weight:600}
+
+/* ── hoja para elegir carpeta ── */
+.sheet{position:fixed;inset:0;z-index:60;background:rgba(15,24,33,.45);
+  display:flex;align-items:flex-end;justify-content:center;animation:fade .18s ease}
+.sh-caja{background:var(--paper);width:100%;max-width:660px;max-height:82vh;overflow-y:auto;
+  border-radius:10px 10px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));
+  animation:subir .22s cubic-bezier(.22,.8,.3,1)}
+@keyframes subir{from{transform:translateY(24px)}to{transform:none}}
+.sh-t{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink3);margin:0 0 5px}
+.sh-s{font-family:'IBM Plex Serif',serif;font-size:14.5px;color:var(--ink2);
+  margin:0 0 15px;line-height:1.45}
+.sh-lista{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;margin-bottom:11px}
+.sh-row{display:flex;align-items:stretch;border-bottom:1px solid var(--line)}
+.sh-row:last-child{border-bottom:none}
+.sh-nom{flex:1;padding:12px 13px;font-size:15px;font-weight:600;color:var(--ink);
+  display:flex;align-items:center;gap:7px}
+.sh-gu{width:9px;height:1px;background:var(--ink3);flex:0 0 auto}
+.sh-mas{flex:0 0 auto;width:44px;border-left:1px solid var(--line);
+  font-size:19px;color:var(--tag);text-align:center;line-height:1}
+
+.sh-in{width:100%;font:inherit;font-size:16px;border:1px solid var(--line);
+  background:var(--card);color:var(--ink);border-radius:var(--r);
+  padding:12px 13px;margin:6px 0 13px}
+.sh-btns{display:flex;gap:8px}
+.sh-btns .act{flex:1;text-align:center}
+.act.pri.del{background:var(--pen);border-color:var(--pen);color:#fff}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:70;
+  background:var(--ink);color:#fff;font-size:14px;font-weight:600;
+  padding:11px 17px;border-radius:20px;box-shadow:0 6px 18px rgba(15,24,33,.28);
+  transition:opacity .35s;max-width:88vw;text-align:center}
+.toast.ir{opacity:0}
+
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+
 /* ── pantallas ── */
 .screen{display:none;padding-top:22px}
 .screen.on{display:block;animation:fade .3s ease}
@@ -311,7 +422,6 @@ h1{
 .rest .note{border-left-color:var(--line);color:var(--ink2)}
 .rest .note b{color:var(--ink3)}
 
-.actions{display:flex;gap:8px}
 .next{flex:1;background:var(--ink);color:#fff;padding:13px;border-radius:var(--r);font-weight:700;font-size:15.5px}
 .flag{
   flex:0 0 auto;border:1px solid var(--line);background:var(--card);
@@ -355,6 +465,7 @@ h1{
     <nav class="tabs" id="tabs">
       <button class="tab" data-go="practicar" aria-pressed="true">Practicar</button>
       <button class="tab" data-go="biblioteca" aria-pressed="false">Biblioteca</button>
+      <button class="tab" data-go="espacio" aria-pressed="false">Espacio</button>
     </nav>
     <div class="strip" id="strip"></div>
   </div>
@@ -409,6 +520,12 @@ h1{
       <div class="chips" id="lib-eje"></div>
     </div>
     <div id="lib-out"></div>
+  </section>
+
+  <!-- ESPACIO DE TRABAJO -->
+  <section class="screen" id="s-esp">
+    <div class="crumb" id="esp-crumb"></div>
+    <div id="esp-out"></div>
   </section>
 
   <!-- CIERRE -->
@@ -2760,7 +2877,7 @@ const uniq = k => [...new Set(BANCO.map(q => q[k]))];
 */
 const KEY = 'iar-stats';
 let DEPOSITO = 'memoria';
-let memoria = null;
+let memoria = {};
 
 const Store = {
   async detectar(){
@@ -2778,20 +2895,22 @@ const Store = {
     }catch(e){}
     DEPOSITO = 'memoria';
   },
-  async leer(){
+  async leer(k){
+    k = k || KEY;
     try{
       if(DEPOSITO === 'claude'){
-        const r = await window.storage.get(KEY);
+        const r = await window.storage.get(k);
         return r && r.value ? r.value : null;
       }
-      if(DEPOSITO === 'local') return localStorage.getItem(KEY);
-      return memoria;
+      if(DEPOSITO === 'local') return localStorage.getItem(k);
+      return memoria[k] || null;
     }catch(e){ return null; }   // clave inexistente = primera vez
   },
-  async escribir(txt){
-    if(DEPOSITO === 'claude'){ await window.storage.set(KEY, txt); return; }
-    if(DEPOSITO === 'local'){ localStorage.setItem(KEY, txt); return; }
-    memoria = txt;
+  async escribir(txt, k){
+    k = k || KEY;
+    if(DEPOSITO === 'claude'){ await window.storage.set(k, txt); return; }
+    if(DEPOSITO === 'local'){ localStorage.setItem(k, txt); return; }
+    memoria[k] = txt;
   }
 };
 
@@ -2839,7 +2958,9 @@ function exportar(){
   URL.revokeObjectURL(a.href);
 }
 async function resetear(){
-  if(!confirm('Borrar todo el progreso guardado?')) return;
+  const ok = await confirmar('Se va a borrar todo el progreso de práctica. '
+    + 'Las notas y carpetas del espacio no se tocan.');
+  if(!ok) return;
   stats = {};
   await guardar();
   pintarChips();
@@ -3038,12 +3159,15 @@ function resolver(){
   html += '<div class="actions">'
     + '<button class="next" id="btn-next">' + (i + 1 < mazo.length ? 'Siguiente' : 'Ver resultado') + '</button>'
     + '<button class="flag" id="btn-flag" aria-pressed="' + (!!flagged) + '">Marcar</button>'
+    + '<button class="flag" id="btn-guardar">Guardar en…</button>'
     + '</div>';
 
   const ex = $('#q-expl');
   ex.innerHTML = html; ex.hidden = false;
 
   $('#btn-next').onclick = avanzar;
+  $('#btn-guardar').onclick = () =>
+    elegirCarpeta('p', q.id, q.caso.replace(/[=`]/g,'').slice(0,90) + '…');
   $('#btn-flag').onclick = e => {
     const s = stats[q.id] = stats[q.id] || {seen:0, ok:0, flag:false};
     s.flag = !s.flag;
@@ -3057,7 +3181,25 @@ function resolver(){
   guardar();
   sesion[i] = {id:q.id, area:q.area, tipo:q.tipo, acierto};
   pintarStrip();
-  $('#q-expl').scrollIntoView({behavior:'smooth', block:'nearest'});
+  centrarEnCorrectas();
+}
+
+/* Deja a la vista la opción correcta (o todas, si son varias) junto con su
+   explicación, descontando la altura de la barra fija superior. */
+function centrarEnCorrectas(){
+  requestAnimationFrame(() => {
+    const buenas = [...document.querySelectorAll('#q-opts .opt.good')].map(b => b.parentElement);
+    if(!buenas.length) return;
+    const barra = document.querySelector('.top');
+    const tope = (barra ? barra.getBoundingClientRect().height : 0) + 10;
+    const a = buenas[0].getBoundingClientRect();
+    const z = buenas[buenas.length - 1].getBoundingClientRect();
+    const alto = z.bottom - a.top;
+    const util = window.innerHeight - tope;
+    // si el conjunto entra en pantalla lo centra; si no, lo alinea arriba
+    const y = window.scrollY + a.top - tope - (alto < util ? (util - alto) / 2 : 8);
+    window.scrollTo({top: Math.max(0, y), behavior: 'smooth'});
+  });
 }
 function avanzar(){
   if(i + 1 < mazo.length){ i++; mostrar(); window.scrollTo({top:0}); }
@@ -3142,6 +3284,7 @@ function pintarBiblioteca(){
             + '<div class="regla-f">'
             + '<button class="drill" data-r="' + r.id + '">Practicar ' + r.qs.length
             + (r.qs.length === 1 ? ' pregunta' : ' preguntas') + '</button>'
+            + '<button class="drill" data-guardar-r="' + r.id + '">Guardar en…</button>'
             + '<span class="dom"><span class="dot ' + d.cls + '"></span>' + d.txt + '</span>'
             + '</div></article>';
         }).join('')
@@ -3151,6 +3294,11 @@ function pintarBiblioteca(){
   out.querySelectorAll('.sind-h').forEach(h =>
     h.onclick = () => h.parentElement.classList.toggle('open'));
   out.querySelectorAll('.drill').forEach(b => b.onclick = () => {
+    if(b.dataset.guardarR){
+      const r = REGLAS.find(x => x.id === b.dataset.guardarR);
+      elegirCarpeta('r', r.id, r.titulo);
+      return;
+    }
     const r = REGLAS.find(x => x.id === b.dataset.r);
     arrancar(BANCO.filter(x => r.qs.includes(x.id)));
   });
@@ -3170,12 +3318,433 @@ function tablaDD(r){
     + '</div>';
 }
 
+/* ═══════════ ESPACIO DE TRABAJO ═══════════
+   Árbol propio del usuario. Cuatro tipos de nodo:
+     carpeta · nota · indice (nota con rol de mapa) · ref (regla o pregunta traída)
+   Los enlaces se escriben [[nombre]] o [[nombre|texto visible]] y se resuelven
+   por nombre de nodo. Los backlinks se calculan recorriendo todos los cuerpos.
+*/
+const ICO = {
+  carpeta:'<svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M1.5 4.2a1 1 0 011-1h3.6l1.4 1.6h6a1 1 0 011 1v7.5a1 1 0 01-1 1h-11a1 1 0 01-1-1z" stroke="currentColor" stroke-width="1.3"/></svg>',
+  nota:'<svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M4 2.2h6.2L14 6v8.8a1 1 0 01-1 1H4a1 1 0 01-1-1V3.2a1 1 0 011-1z" stroke="currentColor" stroke-width="1.3"/><path d="M9.9 2.4V6H13.7" stroke="currentColor" stroke-width="1.3"/></svg>',
+  indice:'<svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M3 4h11M3 8.5h11M3 13h7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
+  ref:'<svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M7 9.8a3 3 0 004.4.3l2-2a3 3 0 00-4.2-4.3l-1.1 1.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M9.9 7.2a3 3 0 00-4.4-.3l-2 2a3 3 0 004.2 4.3l1.1-1.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
+};
+
+let ESP = { nodos: {} };        // id -> {tipo, nom, padre, cuerpo, refId, orden}
+let ruta = ['raiz'], vista = 'lista', editando = null, marcados = new Set();
+
+async function cargarEspacio(){
+  const t = await Store.leer('iar-espacio');
+  if(t){ try{ ESP = JSON.parse(t); }catch(e){} }
+  if(!ESP.nodos) ESP.nodos = {};
+}
+async function guardarEspacio(){
+  try{ await Store.escribir(JSON.stringify(ESP), 'iar-espacio'); }catch(e){}
+}
+const nuevoId = () => 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const hijosDe = p => Object.entries(ESP.nodos)
+  .filter(([, n]) => n.padre === p)
+  .sort((a, b) => (a[1].orden || 0) - (b[1].orden || 0))
+  .map(([id]) => id);
+const nombreDe = id => id === 'raiz' ? 'Mi espacio' : (ESP.nodos[id] ? ESP.nodos[id].nom : '(borrado)');
+
+async function crear(tipo){
+  const nom = await pedirTexto(
+    tipo === 'carpeta' ? 'Nombre de la carpeta'
+  : tipo === 'indice'  ? 'Nombre del índice' : 'Título de la nota');
+  if(!nom) return;
+  const p = ruta[ruta.length-1];
+  const id = nuevoId();
+  ESP.nodos[id] = {tipo, nom, padre: p, cuerpo: '', orden: hijosDe(p).length};
+  guardarEspacio();
+  if(tipo === 'carpeta'){ pintarEspacio(); } else { editando = id; vista = 'editar'; pintarEspacio(); }
+}
+function traer(){
+  const p = ruta[ruta.length-1];
+  let n = 0;
+  marcados.forEach(k => {
+    const [clase, rid] = k.split('::');
+    const nom = clase === 'r' ? REGLAS.find(x => x.id === rid).titulo
+                              : BANCO.find(x => x.id === rid).caso.replace(/[=`]/g,'').slice(0,70) + '…';
+    ESP.nodos[nuevoId()] = {tipo:'ref', clase, refId:rid, nom, padre:p, orden: hijosDe(p).length + n++};
+  });
+  marcados.clear(); guardarEspacio(); vista = 'lista'; pintarEspacio();
+}
+function mover(id, d){
+  const p = ESP.nodos[id].padre, h = hijosDe(p);
+  const i = h.indexOf(id), j = i + d;
+  if(j < 0 || j >= h.length) return;
+  h.splice(i,1); h.splice(j,0,id);
+  h.forEach((x,k) => ESP.nodos[x].orden = k);
+  guardarEspacio(); pintarEspacio();
+}
+async function borrar(id){
+  const n = ESP.nodos[id];
+  const tieneHijos = hijosDe(id).length;
+  const ok = await confirmar('Se va a borrar "' + n.nom + '"'
+    + (tieneHijos ? ' y todo su contenido.' : '.'));
+  if(!ok) return;
+  (function rec(x){ hijosDe(x).forEach(rec); delete ESP.nodos[x]; })(id);
+  guardarEspacio();
+  ruta = ruta.filter(x => x !== id); vista = 'lista'; pintarEspacio();
+}
+
+/* enlaces y backlinks */
+function porNombre(nom){
+  const t = nom.trim().toLowerCase();
+  return Object.keys(ESP.nodos).find(id => ESP.nodos[id].nom.toLowerCase() === t);
+}
+function render(txt){
+  const esc = (txt || '').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const conLinks = esc.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, dest, vis) => {
+    const id = porNombre(dest);
+    const t = (vis || dest).trim();
+    if(!id) return '<span class="lk roto">' + t + '</span>';
+    const rf = ESP.nodos[id].tipo === 'ref' ? ' rf' : '';
+    return '<button class="lk' + rf + '" data-ir="' + id + '">' + t + '</button>';
+  });
+  return conLinks.split(/\n{2,}/).map(b => {
+    if(/^\s*[-*]\s/m.test(b))
+      return '<ul>' + b.split('\n').filter(l=>l.trim()).map(l =>
+        '<li>' + l.replace(/^\s*[-*]\s?/,'') + '</li>').join('') + '</ul>';
+    return '<p>' + b.replace(/\n/g,'<br>') + '</p>';
+  }).join('');
+}
+function backlinks(id){
+  const nom = nombreDe(id).toLowerCase();
+  return Object.entries(ESP.nodos).filter(([k, n]) => {
+    if(k === id || !n.cuerpo) return false;
+    return [...n.cuerpo.matchAll(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g)]
+      .some(m => m[1].trim().toLowerCase() === nom);
+  }).map(([k]) => k);
+}
+
+/* vistas */
+function pintarEspacio(){
+  const out = $('#esp-out');
+  const cur = ruta[ruta.length-1];
+  if(cur !== 'raiz' && !ESP.nodos[cur]){ ruta = ['raiz']; }
+  $('#esp-crumb').innerHTML = ruta.map((id, i) =>
+    i === ruta.length - 1 && vista === 'lista'
+      ? '<span class="cur">' + nombreDe(id) + '</span>'
+      : '<button data-cr="' + i + '">' + nombreDe(id) + '</button><span class="sep">›</span>'
+  ).join('') + (vista === 'editar' ? '<span class="cur">editando</span>'
+              : vista === 'traer'  ? '<span class="cur">traer de biblioteca</span>' : '');
+  $('#esp-crumb').querySelectorAll('[data-cr]').forEach(b => b.onclick = () => {
+    ruta = ruta.slice(0, +b.dataset.cr + 1); vista = 'lista'; pintarEspacio();
+  });
+
+  if(vista === 'traer'){ out.innerHTML = vPicker(); enlazarPicker(); return; }
+  if(vista === 'editar'){ out.innerHTML = vEditor(); enlazarEditor(); return; }
+
+  const n = ruta[ruta.length-1] === 'raiz' ? null : ESP.nodos[ruta[ruta.length-1]];
+  out.innerHTML = (!n || n.tipo === 'carpeta') ? vCarpeta() : vNodo(ruta[ruta.length-1], n);
+  out.querySelectorAll('[data-ir]').forEach(b => b.onclick = () => {
+    ruta.push(b.dataset.ir); vista = 'lista'; pintarEspacio(); window.scrollTo({top:0});
+  });
+  out.querySelectorAll('[data-mv]').forEach(b => b.onclick = e => {
+    e.stopPropagation(); mover(b.dataset.mv, +b.dataset.d);
+  });
+  const on = (sel, fn) => { const el = $(sel); if(el) el.onclick = fn; };
+  on('#e-carpeta', () => crear('carpeta'));
+  on('#e-nota',    () => crear('nota'));
+  on('#e-indice',  () => crear('indice'));
+  on('#e-traer',   () => { vista = 'traer'; pintarEspacio(); window.scrollTo({top:0}); });
+  on('#e-editar',  () => { editando = ruta[ruta.length-1]; vista = 'editar'; pintarEspacio(); });
+  on('#e-borrar',  () => borrar(ruta[ruta.length-1]));
+  on('#e-practicar', () => {
+    const n = ESP.nodos[ruta[ruta.length-1]];
+    if(n.clase === 'r'){
+      const r = REGLAS.find(x => x.id === n.refId);
+      if(r) arrancar(BANCO.filter(q => r.qs.includes(q.id)));
+    } else {
+      arrancar(BANCO.filter(q => q.id === n.refId));
+    }
+  });
+  on('#e-nota-sobre', async () => {
+    const base = ESP.nodos[ruta[ruta.length-1]];
+    const nom = await pedirTexto('Título de la nota', 'Sobre: ' + base.nom.slice(0,40));
+    if(!nom) return;
+    const id = nuevoId();
+    ESP.nodos[id] = {tipo:'nota', nom, padre: base.padre, cuerpo:'[[' + base.nom + ']]\n\n',
+                     orden: hijosDe(base.padre).length};
+    guardarEspacio(); ruta = ruta.slice(0,-1); editando = id; vista = 'editar'; pintarEspacio();
+  });
+}
+function vCarpeta(){
+  const p = ruta[ruta.length-1], h = hijosDe(p);
+  const botones = '<div class="acts">'
+    + '<button class="act pri" id="e-carpeta">+ Carpeta</button>'
+    + '<button class="act pri" id="e-nota">+ Nota</button>'
+    + '<button class="act" id="e-indice">+ Índice</button>'
+    + '<button class="act" id="e-traer">Traer de biblioteca</button>'
+    + (p !== 'raiz' ? '<button class="act del" id="e-borrar">Borrar carpeta</button>' : '')
+    + '</div>';
+  if(!h.length){
+    return '<div class="vacio"><div class="fig"></div>'
+      + '<h2>' + (p === 'raiz' ? 'Tu espacio está vacío' : 'Carpeta vacía') + '</h2>'
+      + '<p>No hay ninguna estructura predefinida. Creá una carpeta, escribí una nota '
+      + 'o traé reglas y preguntas desde la biblioteca.</p>' + botones + '</div>';
+  }
+  return '<h1>' + nombreDe(p) + '</h1><p class="meta">' + h.length + ' elementos</p>'
+    + h.map(id => {
+        const n = ESP.nodos[id];
+        const ic = ICO[n.tipo === 'ref' ? 'ref' : n.tipo];
+        const sub = n.tipo === 'carpeta' ? hijosDe(id).length + ' elementos'
+                  : n.tipo === 'indice'  ? 'índice'
+                  : n.tipo === 'ref'     ? (n.clase === 'r' ? 'regla' : 'pregunta') : 'nota';
+        return '<div class="row' + (n.tipo === 'ref' ? ' ref' : '') + '">'
+          + '<span class="mover"><button class="mv" data-mv="' + id + '" data-d="-1">▲</button>'
+          + '<button class="mv" data-mv="' + id + '" data-d="1">▼</button></span>'
+          + '<span class="ic">' + ic + '</span>'
+          + '<button class="nm" data-ir="' + id + '" style="background:none">' + n.nom
+          + '<small>' + sub + '</small></button>'
+          + (n.tipo === 'carpeta' ? '<span class="ar"></span>' : '') + '</div>';
+      }).join('')
+    + botones;
+}
+function vNodo(id, n){
+  if(n.tipo === 'ref') return vRef(id, n);
+  const bl = backlinks(id);
+  return '<h1>' + n.nom + '</h1>'
+    + '<p class="meta">' + (n.tipo === 'indice' ? 'índice' : 'nota') + '</p>'
+    + '<div class="doc">' + (n.cuerpo ? render(n.cuerpo) : '<p style="color:var(--ink3)">Vacía.</p>') + '</div>'
+    + (bl.length ? '<div class="back"><b>Mencionada en</b>' + bl.map(k =>
+        '<button class="bl" data-ir="' + k + '">' + ESP.nodos[k].nom + '</button>').join('') + '</div>' : '')
+    + '<div class="acts"><button class="act pri" id="e-editar">Editar</button>'
+    + '<button class="act del" id="e-borrar">Borrar</button></div>';
+}
+function vRef(id, n){
+  const bl = backlinks(id);
+  let cuerpo = '<p style="color:var(--ink3)">Este elemento ya no existe en la biblioteca.</p>';
+  let acciones = '';
+  if(n.clase === 'r'){
+    const r = REGLAS.find(x => x.id === n.refId);
+    if(r){
+      cuerpo = '<p>' + r.cuerpo + '</p>'
+        + '<div class="tr"><b>Dónde está la trampa</b>' + r.trampa + '</div>'
+        + (r.dd ? tablaDD(r) : '');
+      acciones = '<button class="act pri" id="e-practicar">Practicar ' + r.qs.length
+        + (r.qs.length === 1 ? ' pregunta' : ' preguntas') + '</button>';
+    }
+  } else {
+    const q = BANCO.find(x => x.id === n.refId);
+    if(q){
+      cuerpo = '<div class="caso-ro">' + fmt(q.caso).replace(/<\/?mark>/g,'') + '</div>'
+        + '<p class="prompt">' + q.pregunta + '</p>'
+        + '<ul class="ops-ro">' + q.opciones.map(o =>
+            '<li' + (o.ok ? ' class="buena"' : '') + '>' + o.t + '</li>').join('') + '</ul>';
+      acciones = '<button class="act pri" id="e-practicar">Practicar esta</button>';
+    }
+  }
+  return '<h1>' + n.nom + '</h1>'
+    + '<p class="meta">' + (n.clase === 'r' ? 'regla' : 'pregunta') + ' · traída de la biblioteca</p>'
+    + '<div class="doc">' + cuerpo + '</div>'
+    + (bl.length ? '<div class="back"><b>Mencionada en</b>' + bl.map(k =>
+        '<button class="bl" data-ir="' + k + '">' + ESP.nodos[k].nom + '</button>').join('') + '</div>' : '')
+    + '<div class="acts">' + acciones
+    + '<button class="act" id="e-nota-sobre">Escribir una nota sobre esto</button>'
+    + '<button class="act del" id="e-borrar">Quitar del espacio</button></div>';
+}
+function vEditor(){
+  const n = ESP.nodos[editando];
+  return '<input class="ed-nom" id="ed-nom" value="' + n.nom.replace(/"/g,'&quot;') + '">'
+    + '<textarea class="ed" id="ed-txt" placeholder="Escribí acá…">' + (n.cuerpo || '') + '</textarea>'
+    + '<p class="ayuda">Para enlazar a otra nota, carpeta o elemento traído, escribí su nombre '
+    + 'entre dobles corchetes: <code>[[Tiroides]]</code>. Para mostrar otro texto: '
+    + '<code>[[Tiroides|lo que confundo]]</code>. Una línea que empieza con guión se vuelve viñeta.</p>'
+    + '<div class="acts"><button class="act pri" id="ed-ok">Guardar</button>'
+    + '<button class="act" id="ed-link">Insertar enlace</button>'
+    + '<button class="act" id="ed-no">Cancelar</button></div>';
+}
+function enlazarEditor(){
+  $('#ed-ok').onclick = () => {
+    const n = ESP.nodos[editando];
+    n.nom = $('#ed-nom').value.trim() || n.nom;
+    n.cuerpo = $('#ed-txt').value;
+    guardarEspacio();
+    if(ruta[ruta.length-1] !== editando) ruta.push(editando);
+    vista = 'lista'; pintarEspacio(); window.scrollTo({top:0});
+  };
+  $('#ed-no').onclick = () => { vista = 'lista'; pintarEspacio(); };
+  $('#ed-link').onclick = async () => {
+    const items = Object.entries(ESP.nodos)
+      .filter(([k]) => k !== editando)
+      .map(([id, n]) => ({id, nom: n.nom}));
+    const elegido = await elegirDeLista('Enlazar a', items);
+    if(!elegido) return;
+    const ta = $('#ed-txt'), pos = ta.selectionStart;
+    const ins = '[[' + ESP.nodos[elegido].nom + ']]';
+    ta.value = ta.value.slice(0, pos) + ins + ta.value.slice(ta.selectionEnd);
+    ta.focus(); ta.selectionStart = ta.selectionEnd = pos + ins.length;
+  };
+}
+function vPicker(){
+  const rs = REGLAS.map(r => ['r', r.id, r.titulo, r.sind]);
+  const qs = BANCO.map(q => ['p', q.id, q.caso.replace(/[=`]/g,'').slice(0,90) + '…', q.examen + ' · ' + q.area]);
+  const todo = rs.concat(qs);
+  return '<h1>Traer de la biblioteca</h1>'
+    + '<p class="meta">se guardará en · ' + ruta.map(nombreDe).join(' › ') + '</p>'
+    + '<input class="search" id="pk-q" type="search" placeholder="Buscar entre '
+    + REGLAS.length + ' reglas y ' + BANCO.length + ' preguntas…" autocomplete="off">'
+    + '<div class="pick" id="pk-lista">' + filas(todo) + '</div>'
+    + '<div class="acts"><button class="act pri" id="pk-ok">Traer <span id="pk-n">'
+    + marcados.size + '</span></button><button class="act" id="pk-no">Cancelar</button></div>';
+}
+function filas(todo){
+  return todo.map(([c, id, t, s]) => {
+    const k = c + '::' + id;
+    return '<button class="i" data-k="' + k + '"><span class="box'
+      + (marcados.has(k) ? ' on' : '') + '"></span>'
+      + '<span class="mini-ty ' + c + '">' + (c === 'r' ? 'Regla' : 'Preg') + '</span>'
+      + '<span>' + t + '<br><small style="color:var(--ink3);font-size:12px">' + s + '</small></span></button>';
+  }).join('');
+}
+function enlazarPicker(){
+  const refrescar = () => {
+    $('#pk-lista').querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
+      const k = b.dataset.k;
+      marcados.has(k) ? marcados.delete(k) : marcados.add(k);
+      b.querySelector('.box').classList.toggle('on');
+      $('#pk-n').textContent = marcados.size;
+    });
+  };
+  refrescar();
+  $('#pk-q').oninput = e => {
+    const q = e.target.value.trim().toLowerCase();
+    const rs = REGLAS.filter(r => !q || (r.titulo + r.sind + r.cuerpo).toLowerCase().includes(q))
+      .map(r => ['r', r.id, r.titulo, r.sind]);
+    const qs = BANCO.filter(x => !q || (x.caso + x.pregunta).toLowerCase().includes(q))
+      .map(x => ['p', x.id, x.caso.replace(/[=`]/g,'').slice(0,90) + '…', x.examen + ' · ' + x.area]);
+    $('#pk-lista').innerHTML = filas(rs.concat(qs).slice(0,60));
+    refrescar();
+  };
+  $('#pk-ok').onclick = traer;
+  $('#pk-no').onclick = () => { marcados.clear(); vista = 'lista'; pintarEspacio(); };
+}
+
+/* ═══ diálogos propios ═══
+   El iframe donde corre la app bloquea prompt(), confirm() y alert(),
+   así que todo lo que pida datos al usuario se resuelve con estas hojas.
+*/
+function hoja(interior){
+  const prev = document.getElementById('sheet');
+  if(prev) prev.remove();
+  const el = document.createElement('div');
+  el.id = 'sheet'; el.className = 'sheet';
+  el.innerHTML = '<div class="sh-caja">' + interior + '</div>';
+  document.body.appendChild(el);
+  return el;
+}
+function pedirTexto(titulo, valor){
+  return new Promise(res => {
+    const el = hoja('<p class="sh-t">' + titulo + '</p>'
+      + '<input class="sh-in" id="dlg-in" value="' + (valor || '').replace(/"/g,'&quot;') + '">'
+      + '<div class="sh-btns"><button class="act pri" id="dlg-ok">Aceptar</button>'
+      + '<button class="act" id="dlg-no">Cancelar</button></div>');
+    const inp = $('#dlg-in');
+    inp.focus(); inp.select();
+    const fin = v => { el.remove(); res(v); };
+    $('#dlg-ok').onclick = () => fin(inp.value.trim() || null);
+    $('#dlg-no').onclick = () => fin(null);
+    el.onclick = e => { if(e.target === el) fin(null); };
+    inp.onkeydown = e => { if(e.key === 'Enter') fin(inp.value.trim() || null); };
+  });
+}
+function confirmar(msg, etiqueta){
+  return new Promise(res => {
+    const el = hoja('<p class="sh-t">Confirmar</p><p class="sh-s">' + msg + '</p>'
+      + '<div class="sh-btns"><button class="act pri del" id="dlg-ok">'
+      + (etiqueta || 'Borrar') + '</button>'
+      + '<button class="act" id="dlg-no">Cancelar</button></div>');
+    const fin = v => { el.remove(); res(v); };
+    $('#dlg-ok').onclick = () => fin(true);
+    $('#dlg-no').onclick = () => fin(false);
+    el.onclick = e => { if(e.target === el) fin(false); };
+  });
+}
+function elegirDeLista(titulo, items){
+  return new Promise(res => {
+    if(!items.length){ toast('No hay elementos disponibles'); res(null); return; }
+    const el = hoja('<p class="sh-t">' + titulo + '</p>'
+      + '<div class="sh-lista">' + items.map(x =>
+          '<div class="sh-row"><button class="sh-nom" data-el="' + x.id + '">'
+          + x.nom + '</button></div>').join('') + '</div>'
+      + '<button class="act" id="dlg-no" style="width:100%;text-align:center">Cancelar</button>');
+    const fin = v => { el.remove(); res(v); };
+    el.querySelectorAll('[data-el]').forEach(b => b.onclick = () => fin(b.dataset.el));
+    $('#dlg-no').onclick = () => fin(null);
+    el.onclick = e => { if(e.target === el) fin(null); };
+  });
+}
+
+/* ═══ archivar en el espacio desde practicar o biblioteca ═══ */
+function yaEsta(clase, refId, padre){
+  return Object.values(ESP.nodos).some(n =>
+    n.tipo === 'ref' && n.clase === clase && n.refId === refId && n.padre === padre);
+}
+function archivar(clase, refId, nom, padre){
+  if(yaEsta(clase, refId, padre)){ toast('Ya estaba en esa carpeta'); return; }
+  ESP.nodos[nuevoId()] = {tipo:'ref', clase, refId, nom, padre, orden: hijosDe(padre).length};
+  guardarEspacio();
+  toast('Guardado en ' + nombreDe(padre));
+}
+async function nuevaCarpetaEn(padre){
+  const nom = await pedirTexto('Nombre de la carpeta nueva');
+  if(!nom) return null;
+  const id = nuevoId();
+  ESP.nodos[id] = {tipo:'carpeta', nom, padre, cuerpo:'', orden: hijosDe(padre).length};
+  guardarEspacio();
+  return id;
+}
+function elegirCarpeta(clase, refId, nom){
+  const linea = (id, nivel) => {
+    const sangria = 'style="padding-left:' + (nivel * 16) + 'px"';
+    return '<div class="sh-row">'
+      + '<button class="sh-nom" data-guardar="' + id + '" ' + sangria + '>'
+      + (nivel ? '<span class="sh-gu"></span>' : '') + nombreDe(id) + '</button>'
+      + '<button class="sh-mas" data-sub="' + id + '" title="Crear subcarpeta acá">+</button>'
+      + '</div>'
+      + hijosDe(id).filter(k => ESP.nodos[k].tipo === 'carpeta')
+          .map(k => linea(k, nivel + 1)).join('');
+  };
+
+  const el = hoja('<p class="sh-t">Guardar en</p>'
+    + '<p class="sh-s">' + nom.slice(0, 80) + (nom.length > 80 ? '…' : '') + '</p>'
+    + '<div class="sh-lista">' + linea('raiz', 0) + '</div>'
+    + '<button class="act" id="sh-no" style="width:100%;text-align:center">Cancelar</button>');
+
+  const cerrar = () => el.remove();
+  el.onclick = e => { if(e.target === el) cerrar(); };
+  $('#sh-no').onclick = cerrar;
+  el.querySelectorAll('[data-guardar]').forEach(b => b.onclick = () => {
+    archivar(clase, refId, nom, b.dataset.guardar); cerrar();
+  });
+  el.querySelectorAll('[data-sub]').forEach(b => b.onclick = async () => {
+    const padre = b.dataset.sub;
+    cerrar();                                   // la hoja de texto reemplaza a ésta
+    const id = await nuevaCarpetaEn(padre);
+    if(id) archivar(clase, refId, nom, id);
+  });
+}
+function toast(txt){
+  const prev = document.getElementById('toast');
+  if(prev) prev.remove();
+  const t = document.createElement('div');
+  t.id = 'toast'; t.className = 'toast'; t.textContent = txt;
+  document.body.appendChild(t);
+  setTimeout(() => t.classList.add('ir'), 2200);
+  setTimeout(() => t.remove(), 2600);
+}
+
 /* ═══ pestañas ═══ */
 function irA(destino){
   document.querySelectorAll('.tab').forEach(t =>
     t.setAttribute('aria-pressed', t.dataset.go === destino));
   $('#strip').innerHTML = ''; $('#count').textContent = '';
   if(destino === 'biblioteca'){ pintarBiblioteca(); ir('#s-lib'); }
+  else if(destino === 'espacio'){ vista = 'lista'; pintarEspacio(); ir('#s-esp'); }
   else { pintarChips(); pintarEstado(); ir('#s-setup'); }
 }
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => irA(t.dataset.go));
@@ -3189,7 +3758,7 @@ $('#btn-again').onclick = () => {
   irA(activa);
 };
 pintarChips();
-cargar();
+cargar().then(cargarEspacio);
 </script>
 </body>
 </html>
