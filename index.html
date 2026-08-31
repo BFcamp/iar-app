@@ -422,6 +422,17 @@ h1{
 .rest .note{border-left-color:var(--line);color:var(--ink2)}
 .rest .note b{color:var(--ink3)}
 
+.nota-personal{margin-bottom:12px}
+.nota-personal label{
+  display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink3);margin-bottom:5px;font-weight:700;
+}
+.nota-personal textarea{
+  width:100%;font-family:'IBM Plex Serif',serif;font-size:14.5px;line-height:1.5;
+  border:1px solid var(--line);border-radius:var(--r);padding:11px 13px;background:var(--card);
+  color:var(--ink);min-height:70px;resize:vertical;
+}
+
 .next{flex:1;background:var(--ink);color:#fff;padding:13px;border-radius:var(--r);font-weight:700;font-size:15.5px}
 .flag{
   flex:0 0 auto;border:1px solid var(--line);background:var(--card);
@@ -2863,7 +2874,7 @@ BANCO.forEach(q => {
 const LETRAS = "abcdefghij";
 let stats = {};                 // {id:{seen,ok,flag}}
 const filtro = { examen:new Set(), area:new Set(), tipo:new Set(), modo:"todas" };
-let mazo = [], i = 0, sel = new Set(), respondida = false;
+let mazo = [], i = 0, sel = new Set(), respondida = false, notaTimer = null;
 const sesion = [];              // [{id,area,tipo,acierto}]
 
 const $ = s => document.querySelector(s);
@@ -3057,6 +3068,9 @@ function fmt(t){
     .replace(/==(.+?)==/g,'<mark>$1</mark>')
     .replace(/`(.+?)`/g,'<code>$1</code>');
 }
+function escHtml(t){
+  return (t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+}
 function mostrar(){
   const q = mazo[i];
   sel = new Set(); respondida = false;
@@ -3141,6 +3155,11 @@ function resolver(){
       + 'provienen de las anotaciones de examen, pero las opciones incorrectas no son las originales.</p>';
   }
 
+  const notaGuardada = (stats[q.id] && stats[q.id].nota) || '';
+  html += '<div class="nota-personal"><label for="q-nota">Tu nota</label>'
+    + '<textarea id="q-nota" placeholder="Anotá algo para vos sobre esta pregunta…">'
+    + escHtml(notaGuardada) + '</textarea></div>';
+
   // el botón va al pie de la lista de opciones, para que lo desplegado
   // aparezca junto a lo que se está mirando
   if(hayPlegadas){
@@ -3174,6 +3193,12 @@ function resolver(){
     e.currentTarget.setAttribute('aria-pressed', s.flag);
     guardar();
   };
+  $('#q-nota').oninput = e => {
+    const s = stats[q.id] = stats[q.id] || {seen:0, ok:0, flag:false};
+    s.nota = e.target.value;
+    clearTimeout(notaTimer);
+    notaTimer = setTimeout(guardar, 500);
+  };
 
   // registro
   const s = stats[q.id] = stats[q.id] || {seen:0, ok:0, flag:false};
@@ -3202,6 +3227,8 @@ function centrarEnCorrectas(){
   });
 }
 function avanzar(){
+  clearTimeout(notaTimer);
+  guardar();
   if(i + 1 < mazo.length){ i++; mostrar(); window.scrollTo({top:0}); }
   else cerrar();
 }
