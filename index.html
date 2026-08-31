@@ -3070,7 +3070,7 @@ function mostrar(){
 
   $('#q-caso').innerHTML = fmt(q.caso);
   $('#q-prompt').textContent = q.pregunta;
-  $('#q-hint').textContent = q.n > 1 ? 'Marcá ' + q.n + ' opciones.' : 'Una sola opción.';
+  $('#q-hint').textContent = (q.n > 1 ? 'Marcá ' + q.n + ' opciones.' : 'Una sola opción.') + ' Podés responder con los números del teclado.';
 
   const box = $('#q-opts'); box.innerHTML = '';
   q.opciones.forEach((o, k) => {
@@ -3753,6 +3753,29 @@ $('#lib-q').oninput = pintarBiblioteca;
 /* ═══ init ═══ */
 $('#btn-start').onclick = () => arrancar(seleccion());
 $('#btn-confirm').onclick = resolver;
+
+/* ═══ atajos de teclado: 1‑9 elige la opción, Enter confirma o avanza ═══ */
+document.addEventListener('keydown', e => {
+  if(!$('#s-q').classList.contains('on')) return;
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if(tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+  if(e.key >= '1' && e.key <= '9'){
+    const k = Number(e.key) - 1;
+    const botones = document.querySelectorAll('#q-opts .opt');
+    if(k < botones.length && !botones[k].disabled){
+      e.preventDefault();
+      elegir(k, botones[k]);
+    }
+    return;
+  }
+  if(e.key === 'Enter'){
+    const siguiente = $('#btn-next');
+    const confirmar = $('#btn-confirm');
+    if(siguiente){ e.preventDefault(); siguiente.click(); }
+    else if(!confirmar.hidden && !confirmar.disabled){ e.preventDefault(); confirmar.click(); }
+  }
+});
 $('#btn-again').onclick = () => {
   const activa = document.querySelector('.tab[aria-pressed="true"]').dataset.go;
   irA(activa);
