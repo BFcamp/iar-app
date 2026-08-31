@@ -2892,19 +2892,26 @@ let memoria = {};
 
 const Store = {
   async detectar(){
+    DEPOSITO = 'memoria';
     if(typeof window.storage !== 'undefined' && window.storage){
       try{
         await window.storage.set('iar-test', '1');
+        const r = await window.storage.get('iar-test');
         try{ await window.storage.delete('iar-test'); }catch(e){}
-        DEPOSITO = 'claude'; return;
+        // se verifica que lo escrito se pueda releer: si window.storage existe
+        // pero no persiste de verdad, no hay que confiar en él en silencio
+        if(r && r.value === '1') DEPOSITO = 'claude';
       }catch(e){}
     }
-    try{
-      localStorage.setItem('iar-test','1');
-      localStorage.removeItem('iar-test');
-      DEPOSITO = 'local'; return;
-    }catch(e){}
-    DEPOSITO = 'memoria';
+    if(DEPOSITO === 'memoria'){
+      try{
+        localStorage.setItem('iar-test','1');
+        const ok = localStorage.getItem('iar-test') === '1';
+        localStorage.removeItem('iar-test');
+        if(ok) DEPOSITO = 'local';
+      }catch(e){}
+    }
+    console.log('[iar] almacenamiento detectado:', DEPOSITO);
   },
   async leer(k){
     k = k || KEY;
@@ -2929,6 +2936,8 @@ async function cargar(){
   if(DEPOSITO === 'memoria') await Store.detectar();
   const txt = await Store.leer();
   if(txt){ try{ stats = JSON.parse(txt); }catch(e){ stats = {}; } }
+  console.log('[iar] preguntas con progreso restauradas desde "' + DEPOSITO + '":',
+    Object.keys(stats).length, 'de', BANCO.length);
   pintarEstado();
 }
 async function guardar(){
