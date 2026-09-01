@@ -49,6 +49,13 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
   font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;
 }
 .count{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink2)}
+.top-r{display:flex;align-items:baseline;gap:10px}
+.auth-btn{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink3);
+  border:1px solid var(--line);border-radius:12px;padding:3px 10px;background:var(--card);
+  max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.auth-btn.on{color:var(--tag);border-color:#A9C0D6}
 /* tira de control: un tick por pregunta */
 .strip{display:flex;gap:2px;margin:9px 0 8px;height:5px}
 .tick{flex:1;background:#D3DAE0;border-radius:1px;transition:background .25s}
@@ -86,6 +93,11 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 .sind.open .sind-h .ar{transform:rotate(-135deg);margin-bottom:-2px}
 .sind-b{display:none;padding-bottom:8px}
 .sind.open .sind-b{display:block;animation:fade .25s ease}
+/* arrastrar el título de un grupo para reordenarlo */
+.sind-h{cursor:grab}
+.sind.sind-arrastrando{opacity:.4}
+.sind-h.sind-destino-arriba{box-shadow:inset 0 2px 0 var(--tag)}
+.sind-h.sind-destino-abajo{box-shadow:inset 0 -2px 0 var(--tag)}
 
 .regla{
   background:var(--card);border:1px solid var(--line);border-top:3px solid var(--hl);
@@ -463,6 +475,171 @@ h1{
   border:1px solid var(--line);background:var(--card);color:var(--ink2);
   padding:2px 7px;border-radius:2px;margin-left:2px;
 }
+
+/* ══════════ Notas: panel de 4 columnas ══════════
+   Vive fuera de .wrap (ver el html) porque necesita el ancho completo de la
+   pantalla, no los 660px del resto de la app, que es mobile-first. */
+:root{
+  --nt-papel:#EDF1F4; --nt-panel:#FFFFFF; --nt-tinta:#0F1821; --nt-tenue:#7B8996;
+  --nt-linea:#CFD7DE; --nt-sel:#22527B; --nt-regla:#8A6D1D; --nt-peligro:#BE2536;
+  --nt-texto:'IBM Plex Serif',Georgia,serif;
+  --nt-top-h:96px;
+}
+#s-esp.screen{
+  position:fixed;left:0;right:0;bottom:0;top:var(--nt-top-h);
+  display:none;padding:0;margin:0;background:var(--nt-papel);z-index:1;animation:none;
+}
+#s-esp.screen.on{display:block;}
+/* .nt-marco y el índice fijan su propio display, así que [hidden] solo por
+   especificidad de clase no alcanza para ocultarlos: se fuerza acá */
+#ntMarco[hidden], #ntIndiceCarpetas[hidden]{display:none;}
+
+.nt-marco{
+  display:grid;
+  grid-template-columns:var(--nt-c1,184px) 6px var(--nt-c2,208px) 6px var(--nt-c3,236px) 6px minmax(0,1fr);
+  height:100%;
+}
+.nt-divisor{background:var(--nt-linea);cursor:col-resize;position:relative;touch-action:none;}
+.nt-divisor::after{content:"";position:absolute;inset:0 -4px;}
+.nt-divisor:hover,.nt-divisor.nt-activo{background:var(--nt-sel);}
+.nt-divisor:focus-visible{outline:2px solid var(--nt-sel);outline-offset:1px;}
+
+.nt-columna{border-right:1px solid var(--nt-linea);background:var(--nt-panel);display:flex;flex-direction:column;min-width:0;}
+.nt-columna:first-child{background:#E3E9EE;}
+
+.nt-encabezado{
+  padding:14px 16px 10px;font-size:11.5px;letter-spacing:.02em;color:var(--nt-tenue);
+  border-bottom:1px solid var(--nt-linea);display:flex;align-items:center;gap:8px;
+  font-family:'IBM Plex Sans Condensed',sans-serif;
+}
+.nt-encabezado .nt-util{margin-left:auto;display:flex;gap:2px;}
+.nt-encabezado button{border:0;background:none;cursor:pointer;color:var(--nt-tenue);font-size:16px;line-height:1;padding:1px 4px;border-radius:3px;}
+.nt-encabezado button:hover{color:var(--nt-tinta);background:#00000008;}
+.nt-encabezado .nt-plegar{font-size:12px;}
+
+.nt-columna.nt-plegada .nt-lista{display:none;}
+.nt-columna.nt-plegada .nt-encabezado{writing-mode:vertical-rl;height:100%;padding:14px 9px;border-bottom:0;justify-content:flex-start;}
+.nt-columna.nt-plegada .nt-encabezado .nt-util{margin-left:0;flex-direction:column;}
+.nt-columna.nt-plegada .nt-encabezado .nt-plegar{transform:rotate(180deg);}
+
+.nt-lista{overflow-y:auto;padding:6px 0;flex:1;}
+
+.nt-item{
+  display:flex;align-items:center;gap:9px;width:100%;
+  padding:8px 16px;cursor:pointer;color:var(--nt-tinta);
+  border-left:3px solid transparent;user-select:none;
+  font-family:'IBM Plex Sans Condensed',sans-serif;font-size:14.5px;
+}
+.nt-item:hover{background:#22527B0A;}
+.nt-item[aria-current="true"]{background:#22527B14;border-left-color:var(--nt-sel);font-weight:600;}
+.nt-item:focus-visible{outline:2px solid var(--nt-sel);outline-offset:-2px;}
+.nt-item .nt-punto{width:7px;height:7px;border-radius:50%;flex:none;background:var(--nt-marca,#B9C4CE);}
+.nt-item .nt-rotulo{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nt-item .nt-cuenta{font-size:11.5px;color:var(--nt-tenue);font-variant-numeric:tabular-nums;font-family:'IBM Plex Mono',monospace;}
+.nt-item.nt-sub{padding-left:38px;font-size:13.5px;}
+.nt-item.nt-sub .nt-rotulo{color:#3D5165;}
+.nt-item.nt-indice .nt-rotulo{font-style:italic;color:var(--nt-tenue);}
+
+.nt-item .nt-mini{
+  display:none;border:0;background:none;cursor:pointer;
+  color:var(--nt-tenue);font-size:13px;line-height:1;padding:2px 4px;border-radius:3px;
+}
+.nt-item:hover .nt-mini,.nt-item[aria-current="true"] .nt-mini{display:block;}
+.nt-item .nt-mini:hover{background:#00000012;color:var(--nt-tinta);}
+.nt-item .nt-mini.nt-borrar:hover{color:var(--nt-peligro);}
+
+.nt-item.nt-arrastrando{opacity:.35;}
+.nt-item.nt-destino-arriba{box-shadow:inset 0 2px 0 var(--nt-sel);}
+.nt-item.nt-destino-abajo{box-shadow:inset 0 -2px 0 var(--nt-sel);}
+
+.nt-lectura{display:grid;grid-template-rows:auto auto minmax(0,1fr);background:var(--nt-papel);min-width:0;height:100%;}
+.nt-barra{display:flex;align-items:center;gap:14px;padding:0 18px;height:44px;border-bottom:1px solid var(--nt-linea);background:var(--nt-panel);}
+.nt-miga{font-size:12.5px;color:var(--nt-tenue);font-family:'IBM Plex Sans Condensed',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nt-miga b{font-weight:600;color:var(--nt-tinta);}
+.nt-estado-guardado{font-size:11.5px;color:var(--nt-tenue);min-width:74px;}
+.nt-acciones{margin-left:auto;display:flex;gap:6px;align-items:center;flex:0 0 auto;}
+.nt-acciones-extra{display:flex;gap:6px;}
+.nt-acciones button{font-family:inherit;font-size:12.5px;padding:5px 11px;border-radius:4px;border:1px solid var(--nt-linea);background:var(--nt-panel);color:var(--nt-tinta);cursor:pointer;white-space:nowrap;}
+.nt-acciones button:hover{border-color:#B4C0CB;}
+.nt-acciones button[aria-pressed="true"]{background:var(--nt-sel);border-color:var(--nt-sel);color:#fff;}
+.nt-acciones button[hidden]{display:none;}
+
+.nt-formato{display:none;align-items:center;gap:4px;padding:7px 18px;background:#F6F8FA;border-bottom:1px solid var(--nt-linea);flex-wrap:wrap;}
+body.nt-editando .nt-formato{display:flex;}
+.nt-formato button{font-family:inherit;font-size:13px;min-width:30px;height:28px;padding:0 8px;border:1px solid transparent;border-radius:4px;background:none;color:var(--nt-tinta);cursor:pointer;}
+.nt-formato button:hover{background:#22527B12;}
+.nt-formato .nt-sep{width:1px;height:18px;background:var(--nt-linea);margin:0 5px;}
+.nt-formato .nt-negrita{font-weight:700;}
+.nt-formato .nt-italica{font-style:italic;}
+.nt-formato .nt-conducta-btn{color:var(--nt-regla);font-size:12.5px;}
+.nt-formato select{font-family:inherit;font-size:12.5px;height:28px;border:1px solid var(--nt-linea);border-radius:4px;background:var(--nt-panel);color:var(--nt-tinta);padding:0 6px;max-width:190px;}
+
+.nt-panes{display:grid;grid-template-columns:minmax(0,1fr);background:var(--nt-linea);min-height:0;}
+.nt-panes.nt-dividido{grid-template-columns:var(--nt-pa,1fr) 6px minmax(0,1fr);}
+.nt-panes:not(.nt-dividido) > .nt-divisor{display:none;}
+
+.nt-hoja{background:var(--nt-panel);overflow-y:auto;padding:34px 42px 60px;min-width:0;}
+.nt-hoja .nt-fijado{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--nt-tenue);margin-bottom:20px;font-family:'IBM Plex Sans Condensed',sans-serif;}
+.nt-hoja .nt-fijado span{width:6px;height:6px;border-radius:50%;background:var(--nt-marca,#B9C4CE);}
+.nt-hoja h1{font-family:var(--nt-texto);font-size:27px;font-weight:600;line-height:1.2;margin:0 0 4px;color:var(--nt-tinta);}
+.nt-hoja .nt-sello{font-size:12px;color:var(--nt-tenue);margin-bottom:26px;font-family:'IBM Plex Sans Condensed',sans-serif;}
+.nt-hoja p,.nt-hoja li{font-family:var(--nt-texto);font-size:16px;line-height:1.62;max-width:62ch;color:#1B2731;}
+.nt-hoja p{margin:0 0 15px;}
+.nt-hoja h2{font-family:var(--nt-texto);font-size:17px;font-weight:600;margin:28px 0 10px;color:var(--nt-tinta);}
+.nt-hoja ul{margin:0 0 16px;padding-left:20px;}
+.nt-hoja li{margin-bottom:7px;}
+
+body.nt-editando .nt-hoja [contenteditable]{outline:none;}
+body.nt-editando .nt-hoja [contenteditable]:focus{box-shadow:-16px 0 0 -15px var(--nt-sel);}
+body.nt-editando .nt-hoja .nt-cuerpo{min-height:220px;}
+.nt-hoja [contenteditable]:empty::before{content:attr(data-vacio);color:#A9B6C2;}
+
+.nt-conducta{border-left:3px solid var(--nt-regla);background:#8A6D1D0D;padding:13px 16px;margin:22px 0;max-width:62ch;}
+.nt-conducta .nt-quien{font-size:11.5px;color:var(--nt-regla);margin-bottom:5px;font-family:'IBM Plex Sans Condensed',sans-serif;}
+.nt-conducta p{margin:0;font-size:16px;}
+
+.nt-vinculo{color:var(--nt-sel);text-decoration:none;border-bottom:1px solid #22527B4D;cursor:pointer;}
+.nt-vinculo:hover{border-bottom-color:var(--nt-sel);}
+
+.nt-indice-lista{list-style:none;padding:0;margin:0;max-width:62ch;}
+.nt-indice-lista li{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid var(--nt-linea);font-family:var(--nt-texto);font-size:16px;}
+.nt-indice-lista .nt-n{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--nt-tenue);min-width:22px;font-variant-numeric:tabular-nums;}
+.nt-indice-lista .nt-estado{margin-left:auto;font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11.5px;color:var(--nt-tenue);}
+
+.nt-vacio{display:flex;align-items:center;justify-content:center;height:100%;padding:40px;text-align:center;}
+.nt-vacio p{color:var(--nt-tenue);font-family:'IBM Plex Sans Condensed',sans-serif;font-size:14px;max-width:30ch;margin:0;}
+
+/* índice de carpetas: la vista con la que se entra a Notas */
+.nt-indice-carpetas{height:100%;overflow-y:auto;background:var(--nt-panel);display:flex;justify-content:center;padding:60px 24px;}
+.nt-indice-envoltorio{max-width:520px;width:100%;}
+.nt-indice-envoltorio h1{font-family:var(--nt-texto);font-size:27px;font-weight:600;line-height:1.2;margin:0 0 4px;color:var(--nt-tinta);}
+.nt-indice-envoltorio .nt-sello{font-size:12px;color:var(--nt-tenue);margin-bottom:26px;font-family:'IBM Plex Sans Condensed',sans-serif;}
+.nt-indice-envoltorio .nt-indice-lista .nt-vinculo{font-family:'IBM Plex Sans Condensed',sans-serif;font-weight:600;font-size:15.5px;}
+.nt-indice-acciones{display:flex;gap:8px;margin-top:22px;}
+.nt-indice-acciones button{font-family:inherit;font-size:13px;padding:8px 15px;border-radius:4px;border:1px solid var(--nt-linea);background:var(--nt-panel);color:var(--nt-tinta);cursor:pointer;}
+.nt-indice-acciones button:hover{border-color:#B4C0CB;}
+.nt-indice-acciones button.nt-primario{background:var(--nt-sel);border-color:var(--nt-sel);color:#fff;}
+
+.nt-caso-ro{background:var(--nt-panel);border:1px solid var(--nt-linea);border-left:3px solid var(--nt-sel);
+  border-radius:3px;padding:14px 15px;margin-bottom:14px;font-family:var(--nt-texto);font-size:15px;line-height:1.6;max-width:62ch;}
+.nt-pregunta-ro{font-weight:600;font-size:16px;margin:0 0 10px;max-width:62ch;}
+.nt-ops-ro{list-style:none;padding:0;margin:0 0 14px;max-width:62ch;}
+.nt-ops-ro li{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:15px;padding:9px 12px;
+  border:1px solid var(--nt-linea);border-radius:3px;background:var(--nt-panel);margin-bottom:5px;color:var(--nt-tenue);}
+.nt-ops-ro li.nt-buena{border-color:#0E6C54;background:#E7F2EE;color:#0E6C54;font-weight:600;}
+.nt-trampa{border-left:2px solid var(--nt-peligro);padding-left:12px;margin:0 0 12px;font-size:14px;line-height:1.5;color:#2A3742;font-family:'IBM Plex Sans Condensed',sans-serif;max-width:62ch;}
+.nt-trampa b{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--nt-peligro);margin-bottom:3px;}
+
+@media (max-width:1080px){ .nt-hoja{padding:26px 28px 50px;} }
+@media (max-width:760px){
+  .nt-marco{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr);height:100%;overflow-y:auto;}
+  .nt-columna{border-right:0;border-bottom:1px solid var(--nt-linea);}
+  .nt-columna.nt-plegada .nt-encabezado{writing-mode:horizontal-tb;height:auto;}
+  .nt-lista{max-height:160px;}
+  .nt-marco > .nt-divisor{display:none;}
+  .nt-panes.nt-dividido{grid-template-columns:minmax(0,1fr);}
+  .nt-panes.nt-dividido > .nt-divisor{display:none;}
+}
 </style>
 </head>
 <body>
@@ -471,7 +648,10 @@ h1{
   <div class="top-in">
     <div class="top-row">
       <span class="brand">Repaso IAR</span>
-      <span class="count" id="count"></span>
+      <div class="top-r">
+        <span class="count" id="count"></span>
+        <button class="auth-btn" id="btn-auth" hidden>Iniciar sesión</button>
+      </div>
     </div>
     <nav class="tabs" id="tabs">
       <button class="tab" data-go="practicar" aria-pressed="true">Practicar</button>
@@ -530,13 +710,8 @@ h1{
       <p class="eyebrow">Agrupar por</p>
       <div class="chips" id="lib-eje"></div>
     </div>
+    <p class="ayuda">Arrastrá el nombre de un grupo para reordenarlo. Cada regla tiene un botón "Editar" para cambiarle el nombre, el síndrome o la especialidad.</p>
     <div id="lib-out"></div>
-  </section>
-
-  <!-- ESPACIO DE TRABAJO -->
-  <section class="screen" id="s-esp">
-    <div class="crumb" id="esp-crumb"></div>
-    <div id="esp-out"></div>
   </section>
 
   <!-- CIERRE -->
@@ -552,6 +727,72 @@ h1{
 
 </main>
 
+<!-- NOTAS: carpetas › secciones › páginas › subpáginas — fuera de .wrap porque
+     necesita el ancho completo, no el máximo de 660px del resto de la app -->
+<section class="screen" id="s-esp">
+  <div class="nt-indice-carpetas" id="ntIndiceCarpetas"></div>
+  <div class="nt-marco" id="ntMarco">
+    <nav class="nt-columna" id="ntCol1" aria-label="Carpetas">
+      <div class="nt-encabezado">Carpetas<span class="nt-util">
+        <button title="Nueva carpeta" data-nt-nuevo="carpeta">+</button>
+        <button id="ntBtnIndice" title="Volver al índice de carpetas">⌂</button>
+        <button class="nt-plegar" data-nt-plegar="ntCol1" title="Achicar la columna">‹</button></span></div>
+      <div class="nt-lista" id="ntListaCarpetas"></div>
+    </nav>
+
+    <div class="nt-divisor" data-nt-arrastrar="--nt-c1" role="separator" tabindex="0" aria-label="Ancho de carpetas"></div>
+
+    <nav class="nt-columna" id="ntCol2" aria-label="Secciones">
+      <div class="nt-encabezado"><span id="ntTituloSecciones">Secciones</span><span class="nt-util">
+        <button title="Nueva sección" data-nt-nuevo="seccion">+</button>
+        <button class="nt-plegar" data-nt-plegar="ntCol2" title="Achicar la columna">‹</button></span></div>
+      <div class="nt-lista" id="ntListaSecciones"></div>
+    </nav>
+
+    <div class="nt-divisor" data-nt-arrastrar="--nt-c2" role="separator" tabindex="0" aria-label="Ancho de secciones"></div>
+
+    <nav class="nt-columna" id="ntCol3" aria-label="Páginas">
+      <div class="nt-encabezado"><span id="ntTituloPaginas">Páginas</span><span class="nt-util">
+        <button title="Nueva página" data-nt-nuevo="pagina">+</button>
+        <button class="nt-plegar" data-nt-plegar="ntCol3" title="Achicar la columna">‹</button></span></div>
+      <div class="nt-lista" id="ntListaPaginas"></div>
+    </nav>
+
+    <div class="nt-divisor" data-nt-arrastrar="--nt-c3" role="separator" tabindex="0" aria-label="Ancho de páginas"></div>
+
+    <div class="nt-lectura">
+      <div class="nt-barra">
+        <div class="nt-miga" id="ntMiga"></div>
+        <div class="nt-acciones" id="ntAcciones">
+          <span class="nt-estado-guardado" id="ntEstadoGuardado"></span>
+          <span class="nt-acciones-extra" id="ntAccionesExtra"></span>
+          <button id="ntBtnDividir" aria-pressed="false">Abrir al lado</button>
+          <button id="ntBtnEditar" aria-pressed="false">Editar</button>
+        </div>
+      </div>
+
+      <div class="nt-formato" id="ntFormato">
+        <button class="nt-negrita" data-nt-cmd="bold" title="Negrita">N</button>
+        <button class="nt-italica" data-nt-cmd="italic" title="Itálica">C</button>
+        <span class="nt-sep"></span>
+        <button data-nt-cmd="formatBlock" data-nt-valor="h2" title="Subtítulo">Subtítulo</button>
+        <button data-nt-cmd="insertUnorderedList" title="Lista">Lista</button>
+        <span class="nt-sep"></span>
+        <button class="nt-conducta-btn" id="ntBtnConducta">Regla de conducta</button>
+        <span class="nt-sep"></span>
+        <select id="ntSelEnlace"><option value="">Enlazar a otra página…</option></select>
+      </div>
+
+      <div class="nt-panes" id="ntPanes">
+        <article class="nt-hoja" id="ntHojaA"></article>
+        <div class="nt-divisor" data-nt-arrastrar="--nt-pa" data-nt-en="panes" role="separator" tabindex="0" aria-label="Ancho del panel izquierdo"></div>
+        <article class="nt-hoja" id="ntHojaB" hidden></article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // Banco de preguntas IAR
 // caso: ==texto== = resaltador   `texto` = valor de laboratorio (monoespaciado)
@@ -2880,11 +3121,25 @@ const sesion = [];              // [{id,area,tipo,acierto}]
 const $ = s => document.querySelector(s);
 const uniq = k => [...new Set(BANCO.map(q => q[k]))];
 
+/* ═══ Supabase (sincronización en la nube) ═══
+   Si hay sesión iniciada, el progreso/notas/espacio se leen y escriben ahí.
+   Sin sesión, se usa el storage local de siempre (ver más abajo).
+   La anon key es pública por diseño: el acceso real lo controlan las
+   políticas RLS de cada tabla (auth.uid() = user_id).
+*/
+const SUPABASE_URL = 'https://ovngisrvygbzuamikguz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92bmdpc3J2eWdienVhbWlrZ3V6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxNDk1MzgsImV4cCI6MjEwMzcyNTUzOH0.8CtDdBq_mNo-DZyRlKG0kQhajdQPsKiIeGgufl4C0NY';
+const sb = (typeof window.supabase !== 'undefined' && SUPABASE_URL && SUPABASE_ANON_KEY)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+let sbSesion = null;   // sesión de Supabase actual (o null si no hay)
+
 /* ═══ persistencia ═══
-   Un solo archivo, tres entornos posibles:
-   1. artefacto de Claude  → window.storage (localStorage está bloqueado)
-   2. GitHub Pages / navegador → localStorage (no hace falta servidor)
-   3. sin ninguno de los dos → memoria, se pierde al cerrar
+   Un solo archivo, cuatro entornos posibles:
+   1. sesión Supabase activa → Supabase (progreso, notas_regla, carpetas, paginas, referencias, enlaces)
+   2. artefacto de Claude  → window.storage (localStorage está bloqueado)
+   3. GitHub Pages / navegador → localStorage (no hace falta servidor)
+   4. ninguno de los anteriores → memoria, se pierde al cerrar
 */
 const KEY = 'iar-stats';
 let DEPOSITO = 'memoria';
@@ -2911,7 +3166,6 @@ const Store = {
         if(ok) DEPOSITO = 'local';
       }catch(e){}
     }
-    console.log('[iar] almacenamiento detectado:', DEPOSITO);
   },
   async leer(k){
     k = k || KEY;
@@ -2932,15 +3186,24 @@ const Store = {
   }
 };
 
+function logCarga(){
+  console.log('[iar] almacenamiento detectado:', DEPOSITO);
+  console.log('[iar] preguntas con progreso restauradas desde "' + DEPOSITO + '":',
+    Object.keys(stats).length, 'de', BANCO.length);
+}
 async function cargar(){
   if(DEPOSITO === 'memoria') await Store.detectar();
   const txt = await Store.leer();
   if(txt){ try{ stats = JSON.parse(txt); }catch(e){ stats = {}; } }
-  console.log('[iar] preguntas con progreso restauradas desde "' + DEPOSITO + '":',
-    Object.keys(stats).length, 'de', BANCO.length);
+  logCarga();
   pintarEstado();
 }
 async function guardar(){
+  if(DEPOSITO === 'supabase'){
+    const ok = await guardarProgresoRemoto();
+    marcarEstado(ok, ok ? null : 'no se pudo sincronizar con Supabase');
+    return;
+  }
   try{
     await Store.escribir(JSON.stringify(stats));
     marcarEstado(true);
@@ -2948,10 +3211,15 @@ async function guardar(){
     marcarEstado(false, e.message || String(e));
   }
 }
+async function guardarNota(id, texto){
+  if(DEPOSITO === 'supabase') return guardarNotaRemota(id, texto);
+  return guardar();   // en local/memoria la nota va adentro del mismo bloque de stats
+}
 
 function pintarEstado(){
   const vistas = Object.keys(stats).length;
   const donde = {
+    supabase: 'sincronizado con tu cuenta' + (sbSesion ? ' (' + sbSesion.user.email + ')' : ''),
     claude:  'progreso guardado en este chat',
     local:   'progreso guardado en este navegador',
     memoria: 'sin guardado: el progreso se pierde al cerrar'
@@ -2981,10 +3249,316 @@ async function resetear(){
   const ok = await confirmar('Se va a borrar todo el progreso de práctica. '
     + 'Las notas y carpetas del espacio no se tocan.');
   if(!ok) return;
+  // las notas por pregunta no son "progreso": se preservan tal cual lo dice el aviso
+  const notasPrevias = {};
+  Object.entries(stats).forEach(([id, s]) => { if(s.nota) notasPrevias[id] = s.nota; });
   stats = {};
+  Object.entries(notasPrevias).forEach(([id, nota]) => {
+    stats[id] = {seen:0, ok:0, flag:false, nota};
+  });
   await guardar();
   pintarChips();
   pintarEstado();
+}
+
+/* ═══ Supabase: lectura/escritura de progreso y notas ═══
+   progreso.datos guarda el mismo objeto "stats" pero sin el campo "nota"
+   (las notas viven aparte, en notas_regla, para poder guardarlas con su
+   propio debounce sin reescribir todo el progreso en cada tecla).
+*/
+function uuidV4(){
+  if(crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+function esUUID(s){
+  return typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+}
+async function guardarProgresoRemoto(){
+  if(!sbSesion) return false;
+  const limpio = {};
+  Object.entries(stats).forEach(([id, s]) => {
+    const { nota, ...resto } = s;
+    limpio[id] = resto;
+  });
+  const { error } = await sb.from('progreso').upsert({
+    user_id: sbSesion.user.id, datos: limpio, actualizado: new Date().toISOString()
+  }, { onConflict: 'user_id' });
+  if(error) console.error('[iar] no se pudo guardar el progreso en Supabase:', error);
+  return !error;
+}
+async function guardarNotaRemota(reglaId, texto){
+  if(!sbSesion) return false;
+  const { error } = await sb.from('notas_regla').upsert({
+    user_id: sbSesion.user.id, regla_id: reglaId, texto, actualizado: new Date().toISOString()
+  }, { onConflict: 'user_id,regla_id' });
+  if(error) console.error('[iar] no se pudo guardar la nota en Supabase:', error);
+  marcarEstado(!error, error ? 'no se pudo guardar la nota' : null);
+  return !error;
+}
+async function sembrarNotasRemoto(){
+  const filas = Object.entries(stats)
+    .filter(([, s]) => s.nota)
+    .map(([id, s]) => ({
+      user_id: sbSesion.user.id, regla_id: id, texto: s.nota, actualizado: new Date().toISOString()
+    }));
+  if(!filas.length) return;
+  const { error } = await sb.from('notas_regla').upsert(filas, { onConflict: 'user_id,regla_id' });
+  if(error) console.error('[iar] no se pudieron sembrar las notas en Supabase:', error);
+}
+
+/* ═══ Supabase: árbol del espacio de trabajo ═══
+   carpeta → carpetas · nota/indice → paginas · ref → referencias
+   Los ids locales pasan a ser uuid en cuanto hay sesión (nuevoId() más abajo),
+   así no hace falta llevar un mapa aparte entre id local e id remoto.
+   Los enlaces [[...]] entre páginas se recalculan enteros en cada guardado.
+*/
+function nombreRef(tipo, refId){
+  if(tipo === 'r'){
+    const r = REGLAS.find(x => x.id === refId);
+    return r ? r.titulo : '(regla borrada)';
+  }
+  const q = BANCO.find(x => x.id === refId);
+  return q ? q.caso.replace(/[=`]/g,'').slice(0,90) + '…' : '(pregunta borrada)';
+}
+function migrarIdsAUuid(){
+  // primera vez que este dispositivo sincroniza: los ids "n1a2b3c" locales
+  // no sirven como uuid, así que se cambian antes de subir el árbol
+  const cambios = {};
+  Object.keys(ESP.nodos).forEach(id => { if(!esUUID(id)) cambios[id] = uuidV4(); });
+  if(!Object.keys(cambios).length) return;
+  const nuevos = {};
+  Object.entries(ESP.nodos).forEach(([id, n]) => {
+    nuevos[cambios[id] || id] = { ...n, padre: cambios[n.padre] || n.padre };
+  });
+  ESP.nodos = nuevos;
+  [carpetaSel, seccionSel] = [cambios[carpetaSel] || carpetaSel, cambios[seccionSel] || seccionSel];
+  if(paginaSel && paginaSel.startsWith('indice:')) paginaSel = 'indice:' + (cambios[paginaSel.slice(7)] || paginaSel.slice(7));
+  else if(paginaSel) paginaSel = cambios[paginaSel] || paginaSel;
+}
+async function guardarEspacioRemoto(){
+  if(!sbSesion) return false;
+  const uid = sbSesion.user.id;
+  const padreId = p => (!p || p === 'raiz') ? null : p;
+
+  const ahora = new Date().toISOString();
+  const carpetas = [], paginas = [], referencias = [];
+  Object.entries(ESP.nodos).forEach(([id, n]) => {
+    if(n.tipo === 'carpeta'){
+      carpetas.push({ id, user_id: uid, nombre: n.nom, padre_id: padreId(n.padre), orden: n.orden || 0, actualizado: n.actualizado || ahora });
+    } else if(n.tipo === 'nota' || n.tipo === 'indice'){
+      // una página puede colgar de una carpeta (carpeta_id) o de otra página
+      // (pagina_padre_id, las subpáginas) — son excluyentes entre sí
+      const padreEsCarpeta = !ESP.nodos[n.padre] || ESP.nodos[n.padre].tipo === 'carpeta';
+      paginas.push({
+        id, user_id: uid,
+        carpeta_id: padreEsCarpeta ? padreId(n.padre) : null,
+        pagina_padre_id: padreEsCarpeta ? null : n.padre,
+        titulo: n.nom, contenido: n.cuerpo || '', orden: n.orden || 0, actualizado: n.actualizado || ahora
+      });
+    } else if(n.tipo === 'ref'){
+      referencias.push({ id, user_id: uid, carpeta_id: padreId(n.padre), tipo: n.clase, ref_id: n.refId, orden: n.orden || 0, actualizado: n.actualizado || ahora });
+    }
+  });
+
+  const idsPagina = new Set(paginas.map(p => p.id));
+  const enlaces = [];
+  paginas.forEach(p => {
+    const vistos = new Set();
+    // los enlaces del editor nuevo van por id (data-nt-ir="..."), no por nombre
+    [...(p.contenido || '').matchAll(/data-nt-ir="([^"]+)"/g)].forEach(m => {
+      const destId = m[1];
+      if(idsPagina.has(destId) && destId !== p.id && !vistos.has(destId)){
+        vistos.add(destId);
+        enlaces.push({ user_id: uid, origen_id: p.id, destino_id: destId, actualizado: ahora });
+      }
+    });
+  });
+
+  try{
+    // las carpetas se suben en dos pasadas (primero sin padre_id) para no
+    // depender del orden en que aparecen padre e hijo dentro del mismo lote
+    if(carpetas.length){
+      const sinPadre = carpetas.map(c => ({ ...c, padre_id: null }));
+      let r = await sb.from('carpetas').upsert(sinPadre); if(r.error) throw r.error;
+      r = await sb.from('carpetas').upsert(carpetas); if(r.error) throw r.error;
+    }
+    if(paginas.length){
+      // mismo motivo: una subpágina puede subir antes que su página madre
+      const sinPadrePagina = paginas.map(p => ({ ...p, pagina_padre_id: null }));
+      let r = await sb.from('paginas').upsert(sinPadrePagina); if(r.error) throw r.error;
+      r = await sb.from('paginas').upsert(paginas); if(r.error) throw r.error;
+    }
+    if(referencias.length){
+      const { error } = await sb.from('referencias').upsert(referencias); if(error) throw error;
+    }
+
+    // limpiar en remoto lo que ya no existe localmente
+    const idsLocales = new Set(Object.keys(ESP.nodos));
+    const [{data: remCarp}, {data: remPag}, {data: remRef}] = await Promise.all([
+      sb.from('carpetas').select('id').eq('user_id', uid),
+      sb.from('paginas').select('id').eq('user_id', uid),
+      sb.from('referencias').select('id').eq('user_id', uid),
+    ]);
+    const sobranRef  = (remRef  || []).map(r => r.id).filter(id => !idsLocales.has(id));
+    const sobranPag  = (remPag  || []).map(r => r.id).filter(id => !idsLocales.has(id));
+    const sobranCarp = (remCarp || []).map(r => r.id).filter(id => !idsLocales.has(id));
+    if(sobranRef.length) await sb.from('referencias').delete().in('id', sobranRef);
+    if(sobranPag.length){
+      await sb.from('paginas').update({ pagina_padre_id: null }).in('id', sobranPag);
+      await sb.from('paginas').delete().in('id', sobranPag);
+    }
+    if(sobranCarp.length){
+      await sb.from('carpetas').update({ padre_id: null }).in('id', sobranCarp);
+      await sb.from('carpetas').delete().in('id', sobranCarp);
+    }
+
+    // enlaces: no tienen id propio, se reescriben enteros
+    await sb.from('enlaces').delete().eq('user_id', uid);
+    if(enlaces.length){
+      const { error } = await sb.from('enlaces').insert(enlaces); if(error) throw error;
+    }
+
+    marcarEstado(true);
+    return true;
+  }catch(err){
+    console.error('[iar] no se pudo sincronizar el espacio con Supabase:', err);
+    marcarEstado(false, 'no se pudo guardar el espacio en la nube');
+    return false;
+  }
+}
+async function cargarEspacioDeSupabase(){
+  const uid = sbSesion.user.id;
+  const [{data: cs}, {data: ps}, {data: rs}] = await Promise.all([
+    sb.from('carpetas').select('*').eq('user_id', uid),
+    sb.from('paginas').select('*').eq('user_id', uid),
+    sb.from('referencias').select('*').eq('user_id', uid),
+  ]);
+  const nodos = {};
+  (cs || []).forEach(c => nodos[c.id] = {
+    tipo:'carpeta', nom:c.nombre, padre:c.padre_id || 'raiz', orden:c.orden || 0, actualizado:c.actualizado
+  });
+  (ps || []).forEach(p => nodos[p.id] = {
+    tipo:'nota', nom:p.titulo, padre:p.pagina_padre_id || p.carpeta_id || 'raiz',
+    cuerpo:p.contenido || '', orden:p.orden || 0, actualizado:p.actualizado
+  });
+  (rs || []).forEach(r => nodos[r.id] = {
+    tipo:'ref', clase:r.tipo, refId:r.ref_id, nom:nombreRef(r.tipo, r.ref_id),
+    padre:r.carpeta_id || 'raiz', orden:r.orden || 0, actualizado:r.actualizado
+  });
+  return { nodos, hayAlgo: !!((cs && cs.length) || (ps && ps.length) || (rs && rs.length)) };
+}
+
+/* ═══ Supabase: preferencias de la interfaz de Notas (anchos, plegado, split) ═══
+   Viven en la misma tabla "progreso", columna aparte ("preferencias"), para
+   no crear una tabla nueva ni tocar la columna "datos" del progreso de práctica.
+*/
+async function guardarPreferenciasRemoto(){
+  if(!sbSesion) return false;
+  const { error } = await sb.from('progreso').upsert({
+    user_id: sbSesion.user.id, preferencias: ntPrefs, actualizado: new Date().toISOString()
+  }, { onConflict: 'user_id' });
+  if(error) console.error('[iar] no se pudieron guardar las preferencias de Notas:', error);
+  return !error;
+}
+
+/* ═══ Supabase: orquesta la sincronización al iniciar/cerrar sesión ═══
+   Si la nube ya tiene datos, gana la nube (es la fuente de verdad de la
+   cuenta). Si la nube está vacía, lo que había local se sube como semilla.
+*/
+async function sincronizarDesdeSupabase(){
+  try{
+    const uid = sbSesion.user.id;
+    const [{data: prog, error: e1}, {data: notas, error: e2}] = await Promise.all([
+      sb.from('progreso').select('datos, preferencias, orden_biblioteca').eq('user_id', uid).maybeSingle(),
+      sb.from('notas_regla').select('regla_id, texto, titulo, sind, area').eq('user_id', uid),
+    ]);
+    if(e1) throw e1; if(e2) throw e2;
+
+    const hayProgresoRemoto = !!(prog && prog.datos && Object.keys(prog.datos).length) || !!(notas && notas.length);
+    if(hayProgresoRemoto){
+      stats = (prog && prog.datos) ? JSON.parse(JSON.stringify(prog.datos)) : {};
+      (notas || []).forEach(n => {
+        stats[n.regla_id] = stats[n.regla_id] || {seen:0, ok:0, flag:false};
+        stats[n.regla_id].nota = n.texto;
+      });
+    } else {
+      await guardarProgresoRemoto();
+      await sembrarNotasRemoto();
+    }
+
+    if(prog && prog.preferencias) Object.assign(ntPrefs, prog.preferencias);
+    else await guardarPreferenciasRemoto();
+
+    if(prog && prog.orden_biblioteca) Object.assign(bibPersonal.ordenGrupos, prog.orden_biblioteca);
+    (notas || []).forEach(n => {
+      const ov = {};
+      if(n.titulo) ov.titulo = n.titulo;
+      if(n.sind) ov.sind = n.sind;
+      if(n.area) ov.area = n.area;
+      if(Object.keys(ov).length) bibPersonal.reglas[n.regla_id] = ov;
+    });
+
+    const espRemoto = await cargarEspacioDeSupabase();
+    if(espRemoto.hayAlgo){
+      ESP = { nodos: espRemoto.nodos };
+      carpetaSel = seccionSel = paginaSel = null;
+      if(normalizarEstructuraNotas()) await guardarEspacioRemoto();
+    } else {
+      migrarIdsAUuid();
+      await guardarEspacioRemoto();
+    }
+
+    logCarga();
+    marcarEstado(true);
+  }catch(err){
+    console.error('[iar] error sincronizando con Supabase:', err);
+    marcarEstado(false, 'no se pudo sincronizar con la nube; se usa el guardado local');
+    DEPOSITO = 'memoria';
+    await Store.detectar();
+    await cargar();
+    await cargarEspacio();
+    await cargarPreferenciasNotas();
+    await cargarBibPersonal();
+  }
+}
+
+/* ═══ Supabase: login por magic link ═══ */
+function pintarAuth(){
+  const b = $('#btn-auth');
+  if(!sb){ b.hidden = true; return; }
+  b.hidden = false;
+  if(sbSesion){
+    b.textContent = sbSesion.user.email;
+    b.title = 'Cerrar sesión (el progreso queda guardado en la nube)';
+    b.classList.add('on');
+  } else {
+    b.textContent = 'Iniciar sesión';
+    b.title = 'Sincronizar el progreso con tu cuenta';
+    b.classList.remove('on');
+  }
+}
+async function manejarSesion(session){
+  sbSesion = session;
+  pintarAuth();
+  if(session){
+    DEPOSITO = 'supabase';
+    await sincronizarDesdeSupabase();
+  } else if(DEPOSITO === 'supabase' || DEPOSITO === 'memoria'){
+    DEPOSITO = 'memoria';
+    await Store.detectar();
+    await cargar();
+    await cargarEspacio();
+    await cargarPreferenciasNotas();
+    await cargarBibPersonal();
+  }
+  pintarChips(); pintarEstado();
+  aplicarPreferenciasNotas();
+  const activa = document.querySelector('.tab[aria-pressed="true"]');
+  if(activa && activa.dataset.go === 'espacio'){ pintarNotas(); }
+  else if(activa && activa.dataset.go === 'biblioteca'){ pintarBiblioteca(); }
 }
 
 /* ═══ filtros ═══ */
@@ -3206,7 +3780,8 @@ function resolver(){
     const s = stats[q.id] = stats[q.id] || {seen:0, ok:0, flag:false};
     s.nota = e.target.value;
     clearTimeout(notaTimer);
-    notaTimer = setTimeout(guardar, 500);
+    // debounce de ~2s: evita una escritura (sobre todo a Supabase) por cada tecla
+    notaTimer = setTimeout(() => guardarNota(q.id, s.nota), 2000);
   };
 
   // registro
@@ -3237,7 +3812,12 @@ function centrarEnCorrectas(){
 }
 function avanzar(){
   clearTimeout(notaTimer);
+  const actual = mazo[i];
   guardar();
+  // si quedó una nota tipeada sin flushear por el debounce, se guarda ya
+  if(actual && stats[actual.id] && stats[actual.id].nota !== undefined){
+    guardarNota(actual.id, stats[actual.id].nota);
+  }
   if(i + 1 < mazo.length){ i++; mostrar(); window.scrollTo({top:0}); }
   else cerrar();
 }
@@ -3272,9 +3852,150 @@ function cerrar(){
   ir('#s-end');
 }
 
-/* ═══ biblioteca ═══ */
+/* ═══ biblioteca ═══
+   REGLAS es contenido fijo (igual para todos). Lo que el usuario edita —
+   nombre, síndrome, especialidad, y el orden de los grupos — se guarda
+   aparte, como una capa personal por encima, y nunca reescribe REGLAS.
+*/
 let ejeLib = 'sind';
 const EJES = [['sind','Síndrome'],['area','Especialidad']];
+let bibPersonal = { reglas:{}, ordenGrupos:{ sind:{}, area:{} } };
+let arrastreGrupo = null;
+
+function reglaEfectiva(r){
+  const o = bibPersonal.reglas[r.id];
+  return o ? Object.assign({}, r, o) : r;
+}
+function guardarOverrideRegla(id, cambios){
+  const r = REGLAS.find(x => x.id === id);
+  const limpio = {};
+  Object.entries(cambios).forEach(([k, v]) => { if(v && v !== r[k]) limpio[k] = v; });
+  if(Object.keys(limpio).length) bibPersonal.reglas[id] = Object.assign({}, bibPersonal.reglas[id], limpio);
+  else delete bibPersonal.reglas[id];
+  guardarBibPersonal();
+}
+async function cargarBibPersonal(){
+  if(DEPOSITO === 'supabase') return;   // ya se cargó en sincronizarDesdeSupabase()
+  const t = await Store.leer('iar-biblioteca-personal');
+  if(t){ try{ Object.assign(bibPersonal, JSON.parse(t)); }catch(e){} }
+}
+async function guardarBibPersonal(){
+  if(DEPOSITO === 'supabase'){ await guardarBibPersonalRemoto(); return; }
+  try{ await Store.escribir(JSON.stringify(bibPersonal), 'iar-biblioteca-personal'); }catch(e){}
+}
+async function guardarBibPersonalRemoto(){
+  if(!sbSesion) return false;
+  const uid = sbSesion.user.id;
+  const ahora = new Date().toISOString();
+  const filas = Object.entries(bibPersonal.reglas).map(([regla_id, o]) => ({
+    user_id: uid, regla_id,
+    titulo: o.titulo || null, sind: o.sind || null, area: o.area || null,
+    actualizado: ahora
+  }));
+  try{
+    if(filas.length){
+      const { error } = await sb.from('notas_regla').upsert(filas, { onConflict: 'user_id,regla_id' });
+      if(error) throw error;
+    }
+    const { error: e2 } = await sb.from('progreso').upsert({
+      user_id: uid, orden_biblioteca: bibPersonal.ordenGrupos, actualizado: ahora
+    }, { onConflict: 'user_id' });
+    if(e2) throw e2;
+    return true;
+  }catch(err){
+    console.error('[iar] no se pudo guardar la personalización de biblioteca:', err);
+    return false;
+  }
+}
+/* arrastrar el título de un grupo para reordenarlo dentro del eje actual */
+function ordenarGrupos(entradas, eje){
+  const orden = bibPersonal.ordenGrupos[eje] || {};
+  return entradas
+    .map((e, i) => ({ e, i, o: orden[e[0]] }))
+    .sort((a, b) => {
+      if(a.o != null && b.o != null) return a.o - b.o;
+      if(a.o != null) return -1;
+      if(b.o != null) return 1;
+      return a.i - b.i;
+    })
+    .map(x => x.e);
+}
+function habilitarArrastreGrupos(contenedor, nombres){
+  contenedor.querySelectorAll('.sind-h').forEach((h, idx) => {
+    h.draggable = true;
+    h.addEventListener('dragstart', e => {
+      arrastreGrupo = idx;
+      h.parentElement.classList.add('sind-arrastrando');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', '');
+    });
+    h.addEventListener('dragend', () => {
+      h.parentElement.classList.remove('sind-arrastrando');
+      contenedor.querySelectorAll('.sind-h').forEach(x => x.classList.remove('sind-destino-arriba','sind-destino-abajo'));
+      arrastreGrupo = null;
+    });
+    h.addEventListener('dragover', e => {
+      if(arrastreGrupo == null) return;
+      e.preventDefault();
+      const caja = h.getBoundingClientRect();
+      const arriba = (e.clientY - caja.top) < caja.height / 2;
+      h.classList.toggle('sind-destino-arriba', arriba);
+      h.classList.toggle('sind-destino-abajo', !arriba);
+    });
+    h.addEventListener('dragleave', () => h.classList.remove('sind-destino-arriba','sind-destino-abajo'));
+    h.addEventListener('drop', e => {
+      if(arrastreGrupo == null) return;
+      e.preventDefault();
+      const caja = h.getBoundingClientRect();
+      const arriba = (e.clientY - caja.top) < caja.height / 2;
+      let destino = idx + (arriba ? 0 : 1);
+      const origen = arrastreGrupo;
+      if(destino > origen) destino--;
+      if(destino === origen) return;
+      const arr = nombres.slice();
+      arr.splice(destino, 0, arr.splice(origen, 1)[0]);
+      bibPersonal.ordenGrupos[ejeLib] = {};
+      arr.forEach((nom, i) => bibPersonal.ordenGrupos[ejeLib][nom] = i);
+      guardarBibPersonal();
+      pintarBiblioteca();
+    });
+  });
+}
+async function editarRegla(id){
+  const r = REGLAS.find(x => x.id === id);
+  if(!r) return;
+  const eff = reglaEfectiva(r);
+  const q = (arr) => [...new Set(arr)].sort();
+  const sindicatos = q(REGLAS.map(x => reglaEfectiva(x).sind));
+  const areas = q(REGLAS.map(x => reglaEfectiva(x).area));
+  const esc = s => (s || '').replace(/"/g,'&quot;');
+  const el = hoja('<p class="sh-t">Editar regla</p>'
+    + '<input class="sh-in" id="ed-r-nom" value="' + esc(eff.titulo) + '" placeholder="Nombre">'
+    + '<input class="sh-in" id="ed-r-sind" list="dl-r-sind" value="' + esc(eff.sind) + '" placeholder="Síndrome">'
+    + '<datalist id="dl-r-sind">' + sindicatos.map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>'
+    + '<input class="sh-in" id="ed-r-area" list="dl-r-area" value="' + esc(eff.area) + '" placeholder="Especialidad">'
+    + '<datalist id="dl-r-area">' + areas.map(a => '<option value="' + esc(a) + '">').join('') + '</datalist>'
+    + '<p class="ayuda">Para el síndrome o la especialidad podés elegir uno existente o escribir uno nuevo.</p>'
+    + '<div class="sh-btns"><button class="act pri" id="ed-r-ok">Guardar</button>'
+    + '<button class="act" id="ed-r-reset">Restaurar original</button></div>'
+    + '<button class="act" id="ed-r-no" style="width:100%;text-align:center;margin-top:8px">Cancelar</button>');
+  const cerrar = () => el.remove();
+  el.onclick = e => { if(e.target === el) cerrar(); };
+  $('#ed-r-no').onclick = cerrar;
+  $('#ed-r-ok').onclick = () => {
+    guardarOverrideRegla(id, {
+      titulo: $('#ed-r-nom').value.trim(),
+      sind: $('#ed-r-sind').value.trim(),
+      area: $('#ed-r-area').value.trim()
+    });
+    cerrar(); pintarBiblioteca();
+  };
+  $('#ed-r-reset').onclick = () => {
+    delete bibPersonal.reglas[id];
+    guardarBibPersonal();
+    cerrar(); pintarBiblioteca();
+  };
+}
 
 function dominio(regla){
   // qué tan sólida está la regla, según las preguntas que la respaldan
@@ -3292,7 +4013,8 @@ function pintarBiblioteca(){
 
   const q = ($('#lib-q').value || '').trim().toLowerCase();
   const texto = r => {
-    let t = r.titulo + ' ' + r.cuerpo + ' ' + r.trampa + ' ' + r.sind + ' ' + r.area;
+    const eff = reglaEfectiva(r);
+    let t = eff.titulo + ' ' + r.cuerpo + ' ' + r.trampa + ' ' + eff.sind + ' ' + eff.area;
     if(r.dd) t += ' ' + r.dd.llave + ' ' + r.dd.ejes.join(' ')
       + ' ' + r.dd.filas.map(f => f.ent + ' ' + f.vals.join(' ')).join(' ');
     return t.toLowerCase();
@@ -3303,17 +4025,19 @@ function pintarBiblioteca(){
   if(!lista.length){ out.innerHTML = '<p class="empty">Ninguna regla coincide con esa búsqueda.</p>'; return; }
 
   const grupos = {};
-  lista.forEach(r => (grupos[r[ejeLib]] = grupos[r[ejeLib]] || []).push(r));
+  lista.forEach(r => { const eff = reglaEfectiva(r); (grupos[eff[ejeLib]] = grupos[eff[ejeLib]] || []).push(r); });
+  const entradas = ordenarGrupos(Object.entries(grupos), ejeLib);
 
-  out.innerHTML = Object.entries(grupos).map(([g, rs], gi) => {
-    const abierto = q || Object.keys(grupos).length === 1;
-    return '<section class="sind' + (abierto ? ' open' : '') + '" data-g="' + gi + '">'
-      + '<button class="sind-h"><span class="nm">' + g + '</span>'
+  out.innerHTML = entradas.map(([g, rs]) => {
+    const abierto = q || entradas.length === 1;
+    return '<section class="sind' + (abierto ? ' open' : '') + '">'
+      + '<button class="sind-h"><span class="nm">' + escHtml(g) + '</span>'
       + '<span class="ct">' + rs.length + '</span><span class="ar"></span></button>'
       + '<div class="sind-b">' + rs.map(r => {
           const d = dominio(r);
+          const eff = reglaEfectiva(r);
           return '<article class="regla">'
-            + '<h3>' + r.titulo + '</h3>'
+            + '<h3>' + escHtml(eff.titulo) + '</h3>'
             + '<p>' + r.cuerpo + '</p>'
             + '<div class="tr"><b>Dónde está la trampa</b>' + r.trampa + '</div>'
             + (r.dd ? tablaDD(r) : '')
@@ -3321,6 +4045,7 @@ function pintarBiblioteca(){
             + '<button class="drill" data-r="' + r.id + '">Practicar ' + r.qs.length
             + (r.qs.length === 1 ? ' pregunta' : ' preguntas') + '</button>'
             + '<button class="drill" data-guardar-r="' + r.id + '">Guardar en…</button>'
+            + '<button class="drill" data-editar-r="' + r.id + '">Editar</button>'
             + '<span class="dom"><span class="dot ' + d.cls + '"></span>' + d.txt + '</span>'
             + '</div></article>';
         }).join('')
@@ -3332,12 +4057,14 @@ function pintarBiblioteca(){
   out.querySelectorAll('.drill').forEach(b => b.onclick = () => {
     if(b.dataset.guardarR){
       const r = REGLAS.find(x => x.id === b.dataset.guardarR);
-      elegirCarpeta('r', r.id, r.titulo);
+      elegirCarpeta('r', r.id, reglaEfectiva(r).titulo);
       return;
     }
+    if(b.dataset.editarR){ editarRegla(b.dataset.editarR); return; }
     const r = REGLAS.find(x => x.id === b.dataset.r);
     arrancar(BANCO.filter(x => r.qs.includes(x.id)));
   });
+  habilitarArrastreGrupos(out, entradas.map(e => e[0]));
 }
 
 function tablaDD(r){
@@ -3354,310 +4081,588 @@ function tablaDD(r){
     + '</div>';
 }
 
-/* ═══════════ ESPACIO DE TRABAJO ═══════════
-   Árbol propio del usuario. Cuatro tipos de nodo:
-     carpeta · nota · indice (nota con rol de mapa) · ref (regla o pregunta traída)
-   Los enlaces se escriben [[nombre]] o [[nombre|texto visible]] y se resuelven
-   por nombre de nodo. Los backlinks se calculan recorriendo todos los cuerpos.
+/* ═══════════ NOTAS: carpetas › secciones › páginas › subpáginas ═══════════
+   Los datos siguen viviendo en ESP.nodos, un diccionario plano id -> nodo
+   {tipo, nom, padre, cuerpo, refId, clase, orden, actualizado}. Lo que cambia
+   acá es cómo se recorre: la interfaz limita el árbol a dos niveles de
+   carpetas (carpeta madre y sección) y agrega subpáginas (una página cuyo
+   padre es otra página). Los enlaces del editor van por id (data-nt-ir), no
+   por nombre como en la versión anterior.
+   tipos de nodo: carpeta · nota · indice (tratada igual que nota) · ref
+   (regla o pregunta traída desde Practicar/Biblioteca con "Guardar en…").
 */
-const ICO = {
-  carpeta:'<svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M1.5 4.2a1 1 0 011-1h3.6l1.4 1.6h6a1 1 0 011 1v7.5a1 1 0 01-1 1h-11a1 1 0 01-1-1z" stroke="currentColor" stroke-width="1.3"/></svg>',
-  nota:'<svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M4 2.2h6.2L14 6v8.8a1 1 0 01-1 1H4a1 1 0 01-1-1V3.2a1 1 0 011-1z" stroke="currentColor" stroke-width="1.3"/><path d="M9.9 2.4V6H13.7" stroke="currentColor" stroke-width="1.3"/></svg>',
-  indice:'<svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M3 4h11M3 8.5h11M3 13h7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
-  ref:'<svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M7 9.8a3 3 0 004.4.3l2-2a3 3 0 00-4.2-4.3l-1.1 1.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M9.9 7.2a3 3 0 00-4.4-.3l-2 2a3 3 0 004.2 4.3l1.1-1.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
-};
-
-let ESP = { nodos: {} };        // id -> {tipo, nom, padre, cuerpo, refId, orden}
-let ruta = ['raiz'], vista = 'lista', editando = null, marcados = new Set();
+let ESP = { nodos: {} };        // id -> {tipo, nom, padre, cuerpo, refId, clase, orden, actualizado}
+let carpetaSel = null, seccionSel = null, paginaSel = null;
+let dividido = false, paginaB = null, editando = false;
+let ntPrefs = { c1:'184px', c2:'208px', c3:'236px', pa:'1fr', p1:false, p2:false, p3:false, dividido:false };
 
 async function cargarEspacio(){
+  if(DEPOSITO === 'supabase') return;   // ya se cargó en sincronizarDesdeSupabase()
   const t = await Store.leer('iar-espacio');
   if(t){ try{ ESP = JSON.parse(t); }catch(e){} }
   if(!ESP.nodos) ESP.nodos = {};
+  if(normalizarEstructuraNotas()) guardarEspacio();
 }
 async function guardarEspacio(){
+  if(DEPOSITO === 'supabase'){ await guardarEspacioRemoto(); return; }
   try{ await Store.escribir(JSON.stringify(ESP), 'iar-espacio'); }catch(e){}
 }
-const nuevoId = () => 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+async function cargarPreferenciasNotas(){
+  if(DEPOSITO === 'supabase') return;   // ya llegaron en sincronizarDesdeSupabase()
+  const t = await Store.leer('iar-notas-prefs');
+  if(t){ try{ Object.assign(ntPrefs, JSON.parse(t)); }catch(e){} }
+}
+async function guardarPreferenciasNotas(){
+  if(DEPOSITO === 'supabase'){ await guardarPreferenciasRemoto(); return; }
+  try{ await Store.escribir(JSON.stringify(ntPrefs), 'iar-notas-prefs'); }catch(e){}
+}
+const nuevoId = () => DEPOSITO === 'supabase'
+  ? uuidV4()
+  : 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
 const hijosDe = p => Object.entries(ESP.nodos)
   .filter(([, n]) => n.padre === p)
   .sort((a, b) => (a[1].orden || 0) - (b[1].orden || 0))
   .map(([id]) => id);
 const nombreDe = id => id === 'raiz' ? 'Mi espacio' : (ESP.nodos[id] ? ESP.nodos[id].nom : '(borrado)');
+const carpetasRaiz = () => hijosDe('raiz').filter(id => ESP.nodos[id].tipo === 'carpeta');
+const seccionesDe  = c => hijosDe(c).filter(id => ESP.nodos[id].tipo === 'carpeta');
+const paginasDe    = p => hijosDe(p).filter(id => ['nota','indice','ref'].includes(ESP.nodos[id].tipo));
+const subpaginasDe = p => hijosDe(p).filter(id => ['nota','indice'].includes(ESP.nodos[id].tipo));
 
-async function crear(tipo){
-  const nom = await pedirTexto(
-    tipo === 'carpeta' ? 'Nombre de la carpeta'
-  : tipo === 'indice'  ? 'Nombre del índice' : 'Título de la nota');
-  if(!nom) return;
-  const p = ruta[ruta.length-1];
-  const id = nuevoId();
-  ESP.nodos[id] = {tipo, nom, padre: p, cuerpo: '', orden: hijosDe(p).length};
-  guardarEspacio();
-  if(tipo === 'carpeta'){ pintarEspacio(); } else { editando = id; vista = 'editar'; pintarEspacio(); }
+function asegurarSeleccion(){
+  const raices = carpetasRaiz();
+  if(!raices.length){ carpetaSel = seccionSel = paginaSel = null; return; }
+  // no elige una carpeta por defecto: al entrar a Notas solo se ve la columna
+  // de carpetas, hasta que el usuario elige una o aprieta "abrir todo"
+  if(carpetaSel && (!ESP.nodos[carpetaSel] || ESP.nodos[carpetaSel].padre !== 'raiz')) carpetaSel = null;
+  if(!carpetaSel){ seccionSel = null; paginaSel = null; return; }
+  const secciones = seccionesDe(carpetaSel);
+  if(!secciones.length){ seccionSel = null; paginaSel = null; return; }
+  if(!seccionSel || !ESP.nodos[seccionSel] || ESP.nodos[seccionSel].padre !== carpetaSel) seccionSel = secciones[0];
+  if(!paginaSel || (paginaSel !== 'indice:' + seccionSel && !paginaPerteneceASeccion(paginaSel, seccionSel)))
+    paginaSel = 'indice:' + seccionSel;
 }
-function traer(){
-  const p = ruta[ruta.length-1];
-  let n = 0;
-  marcados.forEach(k => {
-    const [clase, rid] = k.split('::');
-    const nom = clase === 'r' ? REGLAS.find(x => x.id === rid).titulo
-                              : BANCO.find(x => x.id === rid).caso.replace(/[=`]/g,'').slice(0,70) + '…';
-    ESP.nodos[nuevoId()] = {tipo:'ref', clase, refId:rid, nom, padre:p, orden: hijosDe(p).length + n++};
-  });
-  marcados.clear(); guardarEspacio(); vista = 'lista'; pintarEspacio();
-}
-function mover(id, d){
-  const p = ESP.nodos[id].padre, h = hijosDe(p);
-  const i = h.indexOf(id), j = i + d;
-  if(j < 0 || j >= h.length) return;
-  h.splice(i,1); h.splice(j,0,id);
-  h.forEach((x,k) => ESP.nodos[x].orden = k);
-  guardarEspacio(); pintarEspacio();
-}
-async function borrar(id){
+function paginaPerteneceASeccion(id, seccion){
   const n = ESP.nodos[id];
-  const tieneHijos = hijosDe(id).length;
-  const ok = await confirmar('Se va a borrar "' + n.nom + '"'
-    + (tieneHijos ? ' y todo su contenido.' : '.'));
-  if(!ok) return;
-  (function rec(x){ hijosDe(x).forEach(rec); delete ESP.nodos[x]; })(id);
-  guardarEspacio();
-  ruta = ruta.filter(x => x !== id); vista = 'lista'; pintarEspacio();
+  if(!n) return false;
+  if(n.padre === seccion) return true;
+  const padre = ESP.nodos[n.padre];
+  return !!padre && padre.padre === seccion;
 }
 
-/* enlaces y backlinks */
-function porNombre(nom){
-  const t = nom.trim().toLowerCase();
-  return Object.keys(ESP.nodos).find(id => ESP.nodos[id].nom.toLowerCase() === t);
-}
-function render(txt){
-  const esc = (txt || '').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-  const conLinks = esc.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, dest, vis) => {
-    const id = porNombre(dest);
-    const t = (vis || dest).trim();
-    if(!id) return '<span class="lk roto">' + t + '</span>';
-    const rf = ESP.nodos[id].tipo === 'ref' ? ' rf' : '';
-    return '<button class="lk' + rf + '" data-ir="' + id + '">' + t + '</button>';
-  });
-  return conLinks.split(/\n{2,}/).map(b => {
-    if(/^\s*[-*]\s/m.test(b))
-      return '<ul>' + b.split('\n').filter(l=>l.trim()).map(l =>
-        '<li>' + l.replace(/^\s*[-*]\s?/,'') + '</li>').join('') + '</ul>';
-    return '<p>' + b.replace(/\n/g,'<br>') + '</p>';
-  }).join('');
-}
-function backlinks(id){
-  const nom = nombreDe(id).toLowerCase();
-  return Object.entries(ESP.nodos).filter(([k, n]) => {
-    if(k === id || !n.cuerpo) return false;
-    return [...n.cuerpo.matchAll(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g)]
-      .some(m => m[1].trim().toLowerCase() === nom);
-  }).map(([k]) => k);
-}
+/* El sistema anterior permitía crear una nota directo en la raíz, o directo
+   adentro de una carpeta madre sin pasar por una sección (la interfaz vieja
+   no obligaba a los dos niveles). La interfaz nueva solo muestra páginas que
+   cuelgan de una sección, así que esto corre una sola vez al cargar y
+   reubica lo que quedaría inaccesible, en vez de dejarlo escondido. Se
+   guarda de nuevo solo si de verdad se movió algo. */
+function normalizarEstructuraNotas(){
+  let cambio = false;
+  const seccionGeneralDeCarpeta = {};
+  const seccionGeneralDe = carpetaId => {
+    if(seccionGeneralDeCarpeta[carpetaId]) return seccionGeneralDeCarpeta[carpetaId];
+    let sec = seccionesDe(carpetaId).find(s => ESP.nodos[s].nom === 'General');
+    if(!sec){
+      sec = nuevoId();
+      ESP.nodos[sec] = {tipo:'carpeta', nom:'General', padre:carpetaId, orden:seccionesDe(carpetaId).length, actualizado:new Date().toISOString()};
+      cambio = true;
+    }
+    seccionGeneralDeCarpeta[carpetaId] = sec;
+    return sec;
+  };
+  let refugio = null;
+  const seccionRefugio = () => {
+    if(refugio) return refugio;
+    let carp = carpetasRaiz()[0];
+    if(!carp){
+      carp = nuevoId();
+      ESP.nodos[carp] = {tipo:'carpeta', nom:'General', padre:'raiz', orden:0, actualizado:new Date().toISOString()};
+      cambio = true;
+    }
+    refugio = seccionGeneralDe(carp);
+    return refugio;
+  };
 
-/* vistas */
-function pintarEspacio(){
-  const out = $('#esp-out');
-  const cur = ruta[ruta.length-1];
-  if(cur !== 'raiz' && !ESP.nodos[cur]){ ruta = ['raiz']; }
-  $('#esp-crumb').innerHTML = ruta.map((id, i) =>
-    i === ruta.length - 1 && vista === 'lista'
-      ? '<span class="cur">' + nombreDe(id) + '</span>'
-      : '<button data-cr="' + i + '">' + nombreDe(id) + '</button><span class="sep">›</span>'
-  ).join('') + (vista === 'editar' ? '<span class="cur">editando</span>'
-              : vista === 'traer'  ? '<span class="cur">traer de biblioteca</span>' : '');
-  $('#esp-crumb').querySelectorAll('[data-cr]').forEach(b => b.onclick = () => {
-    ruta = ruta.slice(0, +b.dataset.cr + 1); vista = 'lista'; pintarEspacio();
-  });
-
-  if(vista === 'traer'){ out.innerHTML = vPicker(); enlazarPicker(); return; }
-  if(vista === 'editar'){ out.innerHTML = vEditor(); enlazarEditor(); return; }
-
-  const n = ruta[ruta.length-1] === 'raiz' ? null : ESP.nodos[ruta[ruta.length-1]];
-  out.innerHTML = (!n || n.tipo === 'carpeta') ? vCarpeta() : vNodo(ruta[ruta.length-1], n);
-  out.querySelectorAll('[data-ir]').forEach(b => b.onclick = () => {
-    ruta.push(b.dataset.ir); vista = 'lista'; pintarEspacio(); window.scrollTo({top:0});
-  });
-  out.querySelectorAll('[data-mv]').forEach(b => b.onclick = e => {
-    e.stopPropagation(); mover(b.dataset.mv, +b.dataset.d);
-  });
-  const on = (sel, fn) => { const el = $(sel); if(el) el.onclick = fn; };
-  on('#e-carpeta', () => crear('carpeta'));
-  on('#e-nota',    () => crear('nota'));
-  on('#e-indice',  () => crear('indice'));
-  on('#e-traer',   () => { vista = 'traer'; pintarEspacio(); window.scrollTo({top:0}); });
-  on('#e-editar',  () => { editando = ruta[ruta.length-1]; vista = 'editar'; pintarEspacio(); });
-  on('#e-borrar',  () => borrar(ruta[ruta.length-1]));
-  on('#e-practicar', () => {
-    const n = ESP.nodos[ruta[ruta.length-1]];
-    if(n.clase === 'r'){
-      const r = REGLAS.find(x => x.id === n.refId);
-      if(r) arrancar(BANCO.filter(q => r.qs.includes(q.id)));
-    } else {
-      arrancar(BANCO.filter(q => q.id === n.refId));
+  Object.entries(ESP.nodos).forEach(([id, n]) => {
+    if(!['nota','indice','ref'].includes(n.tipo)) return;
+    const padre = ESP.nodos[n.padre];
+    if(padre && padre.tipo === 'carpeta' && padre.padre === 'raiz'){
+      // página colgando directo de una carpeta madre: le arma una sección "General" ahí mismo
+      const destino = seccionGeneralDe(n.padre);
+      n.padre = destino; n.orden = hijosDe(destino).length; cambio = true;
+    } else if(n.padre === 'raiz' || !padre){
+      // página colgando directo de la raíz (o de un nodo que ya no existe): a un refugio
+      const destino = seccionRefugio();
+      n.padre = destino; n.orden = hijosDe(destino).length; cambio = true;
     }
   });
-  on('#e-nota-sobre', async () => {
-    const base = ESP.nodos[ruta[ruta.length-1]];
-    const nom = await pedirTexto('Título de la nota', 'Sobre: ' + base.nom.slice(0,40));
-    if(!nom) return;
-    const id = nuevoId();
-    ESP.nodos[id] = {tipo:'nota', nom, padre: base.padre, cuerpo:'[[' + base.nom + ']]\n\n',
-                     orden: hijosDe(base.padre).length};
-    guardarEspacio(); ruta = ruta.slice(0,-1); editando = id; vista = 'editar'; pintarEspacio();
+  return cambio;
+}
+
+/* ── crear ── */
+async function crearCarpetaRaiz(){
+  const nom = await pedirTexto('Nombre de la carpeta');
+  if(!nom) return;
+  const id = nuevoId();
+  ESP.nodos[id] = {tipo:'carpeta', nom, padre:'raiz', orden:hijosDe('raiz').length, actualizado:new Date().toISOString()};
+  carpetaSel = id; seccionSel = null; paginaSel = null;
+  guardarEspacio(); asegurarSeleccion(); pintarNotas();
+}
+async function crearSeccion(){
+  if(!carpetaSel) return;
+  const nom = await pedirTexto('Nombre de la sección');
+  if(!nom) return;
+  const id = nuevoId();
+  ESP.nodos[id] = {tipo:'carpeta', nom, padre:carpetaSel, orden:hijosDe(carpetaSel).length, actualizado:new Date().toISOString()};
+  seccionSel = id; paginaSel = 'indice:' + id;
+  guardarEspacio(); pintarNotas();
+}
+function nuevaPaginaBlanco(nombre){
+  const ahora = new Date().toISOString();
+  return {tipo:'nota', nom: nombre || 'Página sin título', cuerpo:'', actualizado: ahora};
+}
+function crearPagina(){
+  if(!seccionSel) return;
+  const id = nuevoId();
+  ESP.nodos[id] = Object.assign(nuevaPaginaBlanco(), {padre:seccionSel, orden:hijosDe(seccionSel).length});
+  paginaSel = id;
+  guardarEspacio(); pintarNotas();
+}
+function crearSubpagina(padreId){
+  const id = nuevoId();
+  ESP.nodos[id] = Object.assign(nuevaPaginaBlanco('Subpágina sin título'), {padre:padreId, orden:hijosDe(padreId).length});
+  paginaSel = id;
+  guardarEspacio(); pintarNotas();
+}
+
+/* ── borrar ── */
+function borrarNodoRecursivo(id){
+  hijosDe(id).forEach(borrarNodoRecursivo);
+  delete ESP.nodos[id];
+}
+async function borrarCarpetaRaiz(id){
+  if(carpetasRaiz().length <= 1){ toast('Tiene que quedar al menos una carpeta.'); return; }
+  const n = ESP.nodos[id], nSecciones = seccionesDe(id).length;
+  const ok = await confirmar('¿Borrar "' + n.nom + '"? Se van sus ' + nSecciones + ' secciones y todo lo que contengan.', 'Borrar');
+  if(!ok) return;
+  borrarNodoRecursivo(id);
+  if(carpetaSel === id){ carpetaSel = null; seccionSel = null; paginaSel = null; }
+  guardarEspacio(); asegurarSeleccion(); pintarNotas();
+}
+async function borrarSeccion(id){
+  if(seccionesDe(carpetaSel).length <= 1){ toast('La carpeta necesita al menos una sección.'); return; }
+  const n = ESP.nodos[id], nPaginas = paginasDe(id).length;
+  const ok = await confirmar('¿Borrar la sección "' + n.nom + '" y sus ' + nPaginas + ' páginas?', 'Borrar');
+  if(!ok) return;
+  borrarNodoRecursivo(id);
+  if(seccionSel === id){ seccionSel = null; paginaSel = null; }
+  guardarEspacio(); asegurarSeleccion(); pintarNotas();
+}
+async function borrarPagina(id){
+  const n = ESP.nodos[id];
+  if(!n) return;
+  const hijos = hijosDe(id).length;
+  let msg;
+  if(n.tipo === 'ref') msg = '¿Quitar "' + n.nom + '" del espacio?';
+  else msg = '¿Borrar "' + n.nom + '"' + (hijos ? ' y sus ' + hijos + ' subpáginas' : '') + '?';
+  const ok = await confirmar(msg, n.tipo === 'ref' ? 'Quitar' : 'Borrar');
+  if(!ok) return;
+  borrarNodoRecursivo(id);
+  if(paginaSel === id) paginaSel = 'indice:' + seccionSel;
+  if(paginaB === id) paginaB = 'indice:' + seccionSel;
+  guardarEspacio(); pintarNotas();
+}
+
+/* ── reordenar arrastrando (mismo nivel) ── */
+let ntArrastre = null;
+function reordenarLista(ids, de, a){
+  const arr = ids.slice();
+  arr.splice(a, 0, arr.splice(de, 1)[0]);
+  arr.forEach((id, i) => { ESP.nodos[id].orden = i; });
+  guardarEspacio(); pintarNotas();
+}
+function habilitarArrastreNotas(contenedor, alSoltar){
+  contenedor.querySelectorAll('.nt-item[draggable="true"]').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      ntArrastre = { zona: el.dataset.ntZona, indice: +el.dataset.ntIndice };
+      el.classList.add('nt-arrastrando');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', '');
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('nt-arrastrando');
+      contenedor.querySelectorAll('.nt-item').forEach(i => i.classList.remove('nt-destino-arriba','nt-destino-abajo'));
+      ntArrastre = null;
+    });
+    el.addEventListener('dragover', e => {
+      if(!ntArrastre || ntArrastre.zona !== el.dataset.ntZona) return;
+      e.preventDefault();
+      const caja = el.getBoundingClientRect();
+      const arriba = (e.clientY - caja.top) < caja.height / 2;
+      el.classList.toggle('nt-destino-arriba', arriba);
+      el.classList.toggle('nt-destino-abajo', !arriba);
+    });
+    el.addEventListener('dragleave', () => el.classList.remove('nt-destino-arriba','nt-destino-abajo'));
+    el.addEventListener('drop', e => {
+      if(!ntArrastre || ntArrastre.zona !== el.dataset.ntZona) return;
+      e.preventDefault();
+      const caja = el.getBoundingClientRect();
+      const arriba = (e.clientY - caja.top) < caja.height / 2;
+      let destino = +el.dataset.ntIndice + (arriba ? 0 : 1);
+      const origen = ntArrastre.indice;
+      if(destino > origen) destino--;
+      if(destino !== origen) alSoltar(origen, destino, el.dataset.ntZona);
+    });
   });
 }
-function vCarpeta(){
-  const p = ruta[ruta.length-1], h = hijosDe(p);
-  const botones = '<div class="acts">'
-    + '<button class="act pri" id="e-carpeta">+ Carpeta</button>'
-    + '<button class="act pri" id="e-nota">+ Nota</button>'
-    + '<button class="act" id="e-indice">+ Índice</button>'
-    + '<button class="act" id="e-traer">Traer de biblioteca</button>'
-    + (p !== 'raiz' ? '<button class="act del" id="e-borrar">Borrar carpeta</button>' : '')
-    + '</div>';
-  if(!h.length){
-    return '<div class="vacio"><div class="fig"></div>'
-      + '<h2>' + (p === 'raiz' ? 'Tu espacio está vacío' : 'Carpeta vacía') + '</h2>'
-      + '<p>No hay ninguna estructura predefinida. Creá una carpeta, escribí una nota '
-      + 'o traé reglas y preguntas desde la biblioteca.</p>' + botones + '</div>';
+
+/* ── ítems de columna ── */
+function crearItemNota(cfg){
+  const el = document.createElement('div');
+  el.className = 'nt-item' + (cfg.clase ? ' ' + cfg.clase : '');
+  el.setAttribute('role', 'button');
+  el.tabIndex = 0;
+  el.setAttribute('aria-current', cfg.activo ? 'true' : 'false');
+  el.draggable = !!cfg.arrastrable;
+  el.dataset.ntIndice = cfg.indice;
+  el.dataset.ntZona = cfg.zona || '';
+  if(cfg.marca) el.innerHTML += '<span class="nt-punto" style="--nt-marca:' + cfg.marca + '"></span>';
+  el.innerHTML += '<span class="nt-rotulo">' + escHtml(cfg.rotulo) + '</span>';
+  if(cfg.cuenta != null) el.innerHTML += '<span class="nt-cuenta">' + cfg.cuenta + '</span>';
+  (cfg.mini || []).forEach(m => {
+    const b = document.createElement('button');
+    b.className = 'nt-mini' + (m.peligro ? ' nt-borrar' : '');
+    b.textContent = m.icono; b.title = m.titulo;
+    b.onclick = e => { e.stopPropagation(); m.accion(); };
+    el.appendChild(b);
+  });
+  el.onclick = cfg.alClic;
+  el.onkeydown = e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); cfg.alClic(); } };
+  return el;
+}
+
+/* ── pintado ── */
+/* Notas tiene dos vistas: el índice (solo la lista de carpetas, es la que se
+   ve al entrar) y la grilla de 4 columnas (la que ya existía). Cuál se
+   muestra depende únicamente de si hay una carpeta elegida — no hace falta
+   una bandera de estado aparte. */
+function pintarNotas(){
+  if(!carpetaSel){
+    $('#ntMarco').hidden = true;
+    $('#ntIndiceCarpetas').hidden = false;
+    pintarIndiceCarpetas();
+    return;
   }
-  return '<h1>' + nombreDe(p) + '</h1><p class="meta">' + h.length + ' elementos</p>'
-    + h.map(id => {
-        const n = ESP.nodos[id];
-        const ic = ICO[n.tipo === 'ref' ? 'ref' : n.tipo];
-        const sub = n.tipo === 'carpeta' ? hijosDe(id).length + ' elementos'
-                  : n.tipo === 'indice'  ? 'índice'
-                  : n.tipo === 'ref'     ? (n.clase === 'r' ? 'regla' : 'pregunta') : 'nota';
-        return '<div class="row' + (n.tipo === 'ref' ? ' ref' : '') + '">'
-          + '<span class="mover"><button class="mv" data-mv="' + id + '" data-d="-1">▲</button>'
-          + '<button class="mv" data-mv="' + id + '" data-d="1">▼</button></span>'
-          + '<span class="ic">' + ic + '</span>'
-          + '<button class="nm" data-ir="' + id + '" style="background:none">' + n.nom
-          + '<small>' + sub + '</small></button>'
-          + (n.tipo === 'carpeta' ? '<span class="ar"></span>' : '') + '</div>';
-      }).join('')
-    + botones;
+  $('#ntMarco').hidden = false;
+  $('#ntIndiceCarpetas').hidden = true;
+  pintarGridNotas();
 }
-function vNodo(id, n){
-  if(n.tipo === 'ref') return vRef(id, n);
-  const bl = backlinks(id);
-  return '<h1>' + n.nom + '</h1>'
-    + '<p class="meta">' + (n.tipo === 'indice' ? 'índice' : 'nota') + '</p>'
-    + '<div class="doc">' + (n.cuerpo ? render(n.cuerpo) : '<p style="color:var(--ink3)">Vacía.</p>') + '</div>'
-    + (bl.length ? '<div class="back"><b>Mencionada en</b>' + bl.map(k =>
-        '<button class="bl" data-ir="' + k + '">' + ESP.nodos[k].nom + '</button>').join('') + '</div>' : '')
-    + '<div class="acts"><button class="act pri" id="e-editar">Editar</button>'
-    + '<button class="act del" id="e-borrar">Borrar</button></div>';
+function pintarIndiceCarpetas(){
+  const raices = carpetasRaiz();
+  const filas = raices.map((id, i) => {
+    const n = ESP.nodos[id];
+    const nSecciones = seccionesDe(id).length;
+    return '<li><span class="nt-n">' + (i + 1) + '</span>'
+      + '<a class="nt-vinculo" data-nt-abrir-carpeta="' + id + '">' + escHtml(n.nom) + '</a>'
+      + '<span class="nt-estado">' + nSecciones + (nSecciones === 1 ? ' sección' : ' secciones') + '</span></li>';
+  }).join('');
+  $('#ntIndiceCarpetas').innerHTML = '<div class="nt-indice-envoltorio">'
+    + '<h1>Notas</h1>'
+    + '<div class="nt-sello">' + (raices.length
+        ? (raices.length + (raices.length === 1 ? ' carpeta' : ' carpetas'))
+        : 'Todavía no creaste ninguna carpeta') + '</div>'
+    + (raices.length ? '<ul class="nt-indice-lista">' + filas + '</ul>' : '')
+    + '<div class="nt-indice-acciones">'
+    + '<button id="ntIdxNuevaCarpeta">+ Nueva carpeta</button>'
+    + (raices.length ? '<button id="ntIdxExpandir" class="nt-primario">Ver todo</button>' : '')
+    + '</div></div>';
+  $('#ntIndiceCarpetas').querySelectorAll('[data-nt-abrir-carpeta]').forEach(a => {
+    a.onclick = () => {
+      carpetaSel = a.dataset.ntAbrirCarpeta;
+      asegurarSeleccion();
+      pintarNotas();
+    };
+  });
+  $('#ntIdxNuevaCarpeta').onclick = () => crearCarpetaRaiz();
+  const bExp = $('#ntIdxExpandir');
+  if(bExp) bExp.onclick = () => abrirTodoNotas();
 }
-function vRef(id, n){
-  const bl = backlinks(id);
-  let cuerpo = '<p style="color:var(--ink3)">Este elemento ya no existe en la biblioteca.</p>';
-  let acciones = '';
+function abrirTodoNotas(){
+  const raices = carpetasRaiz();
+  if(!raices.length) return;
+  carpetaSel = raices[0];
+  asegurarSeleccion();
+  pintarNotas();
+}
+function pintarGridNotas(){
+  asegurarSeleccion();
+
+  const raices = carpetasRaiz();
+  const colC = $('#ntListaCarpetas'); colC.innerHTML = '';
+  raices.forEach((id, i) => {
+    const n = ESP.nodos[id];
+    colC.appendChild(crearItemNota({
+      rotulo: n.nom, marca: n.marca || '#7E8C99', activo: id === carpetaSel,
+      indice: i, zona: 'carpetas', arrastrable: true,
+      mini: [{ icono:'×', titulo:'Borrar carpeta', peligro:true, accion:() => borrarCarpetaRaiz(id) }],
+      alClic: () => { carpetaSel = id; seccionSel = null; paginaSel = null; asegurarSeleccion(); pintarNotas(); }
+    }));
+  });
+  habilitarArrastreNotas(colC, (de, a) => reordenarLista(carpetasRaiz(), de, a));
+
+  if(!carpetaSel){
+    $('#ntTituloSecciones').textContent = 'Secciones';
+    $('#ntListaSecciones').innerHTML = '';
+    $('#ntTituloPaginas').textContent = 'Páginas';
+    $('#ntListaPaginas').innerHTML = '';
+    $('#ntMiga').innerHTML = '';
+    renderHojaVacia($('#ntHojaA'), carpetasRaiz().length
+      ? 'Elegí una carpeta a la izquierda, o abrí todas con el botón de arriba.'
+      : 'Creá tu primera carpeta para empezar.');
+    $('#ntPanes').classList.remove('nt-dividido'); $('#ntHojaB').hidden = true;
+    $('#ntSelEnlace').innerHTML = '<option value="">Enlazar a otra página…</option>';
+    actualizarAccionesNotas();
+    return;
+  }
+
+  $('#ntTituloSecciones').textContent = ESP.nodos[carpetaSel].nom;
+  const secciones = seccionesDe(carpetaSel);
+  const colS = $('#ntListaSecciones'); colS.innerHTML = '';
+  secciones.forEach((id, i) => {
+    const n = ESP.nodos[id];
+    colS.appendChild(crearItemNota({
+      rotulo: n.nom, activo: id === seccionSel, cuenta: paginasDe(id).length,
+      indice: i, zona: 'secciones', arrastrable: true,
+      mini: [{ icono:'×', titulo:'Borrar sección', peligro:true, accion:() => borrarSeccion(id) }],
+      alClic: () => { seccionSel = id; paginaSel = 'indice:' + id; pintarNotas(); }
+    }));
+  });
+  habilitarArrastreNotas(colS, (de, a) => reordenarLista(seccionesDe(carpetaSel), de, a));
+
+  if(!seccionSel){
+    $('#ntTituloPaginas').textContent = 'Páginas';
+    $('#ntListaPaginas').innerHTML = '';
+    $('#ntMiga').innerHTML = escHtml(ESP.nodos[carpetaSel].nom);
+    renderHojaVacia($('#ntHojaA'), 'Creá una sección para empezar a escribir.');
+    $('#ntPanes').classList.remove('nt-dividido'); $('#ntHojaB').hidden = true;
+    $('#ntSelEnlace').innerHTML = '<option value="">Enlazar a otra página…</option>';
+    actualizarAccionesNotas();
+    return;
+  }
+
+  $('#ntTituloPaginas').textContent = ESP.nodos[seccionSel].nom;
+  const colP = $('#ntListaPaginas'); colP.innerHTML = '';
+  colP.appendChild(crearItemNota({
+    rotulo: 'Índice de la sección', clase: 'nt-indice', indice: -1,
+    activo: paginaSel === 'indice:' + seccionSel,
+    alClic: () => { paginaSel = 'indice:' + seccionSel; pintarNotas(); }
+  }));
+  const paginas = paginasDe(seccionSel);
+  paginas.forEach((id, i) => {
+    const n = ESP.nodos[id];
+    const mini = [];
+    if(n.tipo !== 'ref') mini.push({ icono:'+', titulo:'Nueva subpágina', accion:() => crearSubpagina(id) });
+    mini.push({ icono:'×', titulo: n.tipo === 'ref' ? 'Quitar del espacio' : 'Borrar página', peligro:true, accion:() => borrarPagina(id) });
+    colP.appendChild(crearItemNota({
+      rotulo: n.nom, activo: id === paginaSel, indice: i,
+      zona: 'paginas', arrastrable: true, mini,
+      alClic: () => { paginaSel = id; pintarNotas(); }
+    }));
+    subpaginasDe(id).forEach((sid, j) => {
+      const sn = ESP.nodos[sid];
+      colP.appendChild(crearItemNota({
+        rotulo: sn.nom, activo: sid === paginaSel, clase:'nt-sub', indice: j,
+        zona: 'sub:' + id, arrastrable: true,
+        mini: [{ icono:'×', titulo:'Borrar subpágina', peligro:true, accion:() => borrarPagina(sid) }],
+        alClic: () => { paginaSel = sid; pintarNotas(); }
+      }));
+    });
+  });
+  habilitarArrastreNotas(colP, (de, a, zona) => {
+    if(zona === 'paginas') reordenarLista(paginasDe(seccionSel), de, a);
+    else if(zona.startsWith('sub:')) reordenarLista(subpaginasDe(zona.slice(4)), de, a);
+  });
+
+  const tituloPagina = paginaSel.startsWith('indice:') ? 'Índice' : ((ESP.nodos[paginaSel] || {}).nom || '');
+  $('#ntMiga').innerHTML = escHtml(ESP.nodos[carpetaSel].nom) + ' <span style="opacity:.5">/</span> '
+    + escHtml(ESP.nodos[seccionSel].nom) + ' <span style="opacity:.5">/</span> <b>' + escHtml(tituloPagina) + '</b>';
+
+  renderHoja($('#ntHojaA'), paginaSel);
+  $('#ntPanes').classList.toggle('nt-dividido', dividido);
+  $('#ntHojaB').hidden = !dividido;
+  if(dividido) renderHoja($('#ntHojaB'), paginaB || paginaSel);
+
+  $('#ntSelEnlace').innerHTML = '<option value="">Enlazar a otra página…</option>' +
+    todasLasPaginasNotas().map(p => '<option value="' + p.id + '">' + escHtml(p.etiqueta) + '</option>').join('');
+
+  actualizarAccionesNotas();
+}
+function actualizarAccionesNotas(){
+  const n = (paginaSel && !paginaSel.startsWith('indice:')) ? ESP.nodos[paginaSel] : null;
+  const esRef = !!(n && n.tipo === 'ref');
+  $('#ntBtnEditar').hidden = esRef || !n;
+  const extra = $('#ntAccionesExtra'); extra.innerHTML = '';
+  if(esRef){
+    const bPract = document.createElement('button');
+    bPract.textContent = 'Practicar';
+    bPract.onclick = () => practicarRef(n);
+    extra.appendChild(bPract);
+    const bQuitar = document.createElement('button');
+    bQuitar.textContent = 'Quitar del espacio';
+    bQuitar.onclick = () => borrarPagina(paginaSel);
+    extra.appendChild(bQuitar);
+  }
+}
+function practicarRef(n){
   if(n.clase === 'r'){
     const r = REGLAS.find(x => x.id === n.refId);
-    if(r){
-      cuerpo = '<p>' + r.cuerpo + '</p>'
-        + '<div class="tr"><b>Dónde está la trampa</b>' + r.trampa + '</div>'
-        + (r.dd ? tablaDD(r) : '');
-      acciones = '<button class="act pri" id="e-practicar">Practicar ' + r.qs.length
-        + (r.qs.length === 1 ? ' pregunta' : ' preguntas') + '</button>';
-    }
+    if(r) arrancar(BANCO.filter(q => r.qs.includes(q.id)));
   } else {
-    const q = BANCO.find(x => x.id === n.refId);
-    if(q){
-      cuerpo = '<div class="caso-ro">' + fmt(q.caso).replace(/<\/?mark>/g,'') + '</div>'
-        + '<p class="prompt">' + q.pregunta + '</p>'
-        + '<ul class="ops-ro">' + q.opciones.map(o =>
-            '<li' + (o.ok ? ' class="buena"' : '') + '>' + o.t + '</li>').join('') + '</ul>';
-      acciones = '<button class="act pri" id="e-practicar">Practicar esta</button>';
+    arrancar(BANCO.filter(q => q.id === n.refId));
+  }
+}
+
+/* ── enlaces internos y navegación por link ── */
+function todasLasPaginasNotas(){
+  const out = [];
+  carpetasRaiz().forEach(cId => {
+    const c = ESP.nodos[cId];
+    seccionesDe(cId).forEach(sId => {
+      const s = ESP.nodos[sId];
+      paginasDe(sId).forEach(pId => {
+        const p = ESP.nodos[pId];
+        out.push({ id: pId, etiqueta: c.nom + ' › ' + s.nom + ' › ' + p.nom });
+        subpaginasDe(pId).forEach(spId => {
+          const sp = ESP.nodos[spId];
+          out.push({ id: spId, etiqueta: c.nom + ' › ' + s.nom + ' › ' + p.nom + ' › ' + sp.nom });
+        });
+      });
+    });
+  });
+  return out;
+}
+function irAPagina(id){
+  const n = ESP.nodos[id];
+  if(!n) return;
+  const padre = ESP.nodos[n.padre];
+  const seccion = (padre && padre.tipo === 'carpeta') ? n.padre : (padre ? padre.padre : null);
+  const carpeta = (seccion && ESP.nodos[seccion]) ? ESP.nodos[seccion].padre : null;
+  if(!seccion || !carpeta) return;
+  carpetaSel = carpeta; seccionSel = seccion; paginaSel = id;
+}
+
+/* ── lectura ── */
+function fmtSello(n){
+  if(n.tipo === 'ref') return 'Traída de la biblioteca';
+  if(!n.actualizado) return 'Recién creada';
+  const dias = Math.floor((Date.now() - new Date(n.actualizado).getTime()) / 86400000);
+  if(dias <= 0) return 'Editado hoy';
+  if(dias === 1) return 'Editado ayer';
+  if(dias < 7) return 'Editado hace ' + dias + ' días';
+  if(dias < 14) return 'Editado la semana pasada';
+  return 'Editado hace ' + Math.floor(dias / 7) + ' semanas';
+}
+function paginasPlanas(seccionId){
+  const out = [];
+  paginasDe(seccionId).forEach(id => {
+    if(ESP.nodos[id].tipo === 'ref') return;   // el índice solo lista páginas propias
+    out.push({ id, nivel: 0 });
+    subpaginasDe(id).forEach(sid => out.push({ id: sid, nivel: 1 }));
+  });
+  return out;
+}
+function renderHojaVacia(nodo, msg){
+  nodo.innerHTML = '<div class="nt-vacio"><p>' + escHtml(msg) + '</p></div>';
+  delete nodo.dataset.ntPagina;
+}
+function renderRef(n){
+  if(n.clase === 'r'){
+    const r = REGLAS.find(x => x.id === n.refId);
+    if(!r) return '<p style="color:var(--nt-tenue)">Este elemento ya no existe en la biblioteca.</p>';
+    return '<p>' + r.cuerpo + '</p>'
+      + '<div class="nt-trampa"><b>Dónde está la trampa</b>' + r.trampa + '</div>'
+      + (r.dd ? tablaDD(r) : '');
+  }
+  const q = BANCO.find(x => x.id === n.refId);
+  if(!q) return '<p style="color:var(--nt-tenue)">Este elemento ya no existe en la biblioteca.</p>';
+  return '<div class="nt-caso-ro">' + fmt(q.caso).replace(/<\/?mark>/g,'') + '</div>'
+    + '<p class="nt-pregunta-ro">' + escHtml(q.pregunta) + '</p>'
+    + '<ul class="nt-ops-ro">' + q.opciones.map(o =>
+        '<li' + (o.ok ? ' class="nt-buena"' : '') + '>' + escHtml(o.t) + '</li>').join('') + '</ul>';
+}
+function renderHoja(nodo, id){
+  if(!id || !carpetaSel || !ESP.nodos[carpetaSel]){ renderHojaVacia(nodo, 'Elegí una página para leerla acá.'); return; }
+  const cNom = ESP.nodos[carpetaSel].nom, cMarca = ESP.nodos[carpetaSel].marca || '#7E8C99';
+
+  if(id.startsWith('indice:')){
+    const secId = id.slice(7), sec = ESP.nodos[secId];
+    if(!sec){ renderHojaVacia(nodo, 'Elegí una página para leerla acá.'); return; }
+    const planas = paginasPlanas(secId);
+    nodo.innerHTML = '<div class="nt-fijado"><span style="--nt-marca:' + cMarca + '"></span>' + escHtml(cNom) + '</div>'
+      + '<h1>' + escHtml(sec.nom) + '</h1><div class="nt-sello">' + paginasDe(secId).length + ' elementos en esta sección</div>'
+      + '<ul class="nt-indice-lista">' + planas.map((e, i) => {
+          const p = ESP.nodos[e.id];
+          return '<li><span class="nt-n">' + (e.nivel ? '' : (i + 1)) + '</span>'
+            + '<a class="nt-vinculo" data-nt-ir="' + e.id + '" style="' + (e.nivel ? 'margin-left:14px' : '') + '">' + escHtml(p.nom) + '</a>'
+            + '<span class="nt-estado">' + ((p.cuerpo || '').trim() ? 'escrita' : 'vacía') + '</span></li>';
+        }).join('') + '</ul>';
+    delete nodo.dataset.ntPagina;
+  } else {
+    const n = ESP.nodos[id];
+    if(!n){ renderHojaVacia(nodo, 'Elegí una página para leerla acá.'); return; }
+    if(n.tipo === 'ref'){
+      nodo.innerHTML = '<div class="nt-fijado"><span style="--nt-marca:' + cMarca + '"></span>' + escHtml(cNom) + '</div>'
+        + '<h1>' + escHtml(n.nom) + '</h1><div class="nt-sello">' + fmtSello(n) + '</div>'
+        + renderRef(n);
+      delete nodo.dataset.ntPagina;
+    } else {
+      nodo.innerHTML = '<div class="nt-fijado"><span style="--nt-marca:' + cMarca + '"></span>' + escHtml(cNom) + '</div>'
+        + '<h1 class="nt-titulo" data-vacio="Sin título">' + escHtml(n.nom) + '</h1>'
+        + '<div class="nt-sello">' + fmtSello(n) + '</div>'
+        + '<div class="nt-cuerpo" data-vacio="Escribí acá. La regla de conducta va al final.">' + (n.cuerpo || '') + '</div>';
+      nodo.dataset.ntPagina = id;
+      aplicarModoEdicionNotas(nodo);
     }
   }
-  return '<h1>' + n.nom + '</h1>'
-    + '<p class="meta">' + (n.clase === 'r' ? 'regla' : 'pregunta') + ' · traída de la biblioteca</p>'
-    + '<div class="doc">' + cuerpo + '</div>'
-    + (bl.length ? '<div class="back"><b>Mencionada en</b>' + bl.map(k =>
-        '<button class="bl" data-ir="' + k + '">' + ESP.nodos[k].nom + '</button>').join('') + '</div>' : '')
-    + '<div class="acts">' + acciones
-    + '<button class="act" id="e-nota-sobre">Escribir una nota sobre esto</button>'
-    + '<button class="act del" id="e-borrar">Quitar del espacio</button></div>';
+  nodo.querySelectorAll('[data-nt-ir]').forEach(a => {
+    a.onclick = () => {
+      if(editando) return;
+      const destino = a.getAttribute('data-nt-ir');
+      if(nodo.id === 'ntHojaB'){ paginaB = destino; } else { irAPagina(destino); }
+      pintarNotas();
+    };
+  });
 }
-function vEditor(){
-  const n = ESP.nodos[editando];
-  return '<input class="ed-nom" id="ed-nom" value="' + n.nom.replace(/"/g,'&quot;') + '">'
-    + '<textarea class="ed" id="ed-txt" placeholder="Escribí acá…">' + (n.cuerpo || '') + '</textarea>'
-    + '<p class="ayuda">Para enlazar a otra nota, carpeta o elemento traído, escribí su nombre '
-    + 'entre dobles corchetes: <code>[[Tiroides]]</code>. Para mostrar otro texto: '
-    + '<code>[[Tiroides|lo que confundo]]</code>. Una línea que empieza con guión se vuelve viñeta.</p>'
-    + '<div class="acts"><button class="act pri" id="ed-ok">Guardar</button>'
-    + '<button class="act" id="ed-link">Insertar enlace</button>'
-    + '<button class="act" id="ed-no">Cancelar</button></div>';
+
+/* ── edición ── */
+let temporizadorNotas = null;
+function marcarGuardadoNotas(){
+  const e = $('#ntEstadoGuardado'); e.textContent = 'Guardado';
+  setTimeout(() => { if(e.textContent === 'Guardado') e.textContent = ''; }, 1600);
 }
-function enlazarEditor(){
-  $('#ed-ok').onclick = () => {
-    const n = ESP.nodos[editando];
-    n.nom = $('#ed-nom').value.trim() || n.nom;
-    n.cuerpo = $('#ed-txt').value;
-    guardarEspacio();
-    if(ruta[ruta.length-1] !== editando) ruta.push(editando);
-    vista = 'lista'; pintarEspacio(); window.scrollTo({top:0});
-  };
-  $('#ed-no').onclick = () => { vista = 'lista'; pintarEspacio(); };
-  $('#ed-link').onclick = async () => {
-    const items = Object.entries(ESP.nodos)
-      .filter(([k]) => k !== editando)
-      .map(([id, n]) => ({id, nom: n.nom}));
-    const elegido = await elegirDeLista('Enlazar a', items);
-    if(!elegido) return;
-    const ta = $('#ed-txt'), pos = ta.selectionStart;
-    const ins = '[[' + ESP.nodos[elegido].nom + ']]';
-    ta.value = ta.value.slice(0, pos) + ins + ta.value.slice(ta.selectionEnd);
-    ta.focus(); ta.selectionStart = ta.selectionEnd = pos + ins.length;
-  };
+function guardarDesdeNotas(nodo){
+  const n = ESP.nodos[nodo.dataset.ntPagina];
+  if(!n) return;
+  const titulo = nodo.querySelector('.nt-titulo'), cuerpo = nodo.querySelector('.nt-cuerpo');
+  if(titulo) n.nom = titulo.textContent.trim() || 'Sin título';
+  if(cuerpo) n.cuerpo = cuerpo.innerHTML;
+  n.actualizado = new Date().toISOString();
+  guardarEspacio();
+  marcarGuardadoNotas();
+  const item = [...$('#ntListaPaginas').querySelectorAll('.nt-item')].find(b => b.getAttribute('aria-current') === 'true');
+  if(item && titulo) item.querySelector('.nt-rotulo').textContent = n.nom;
+  const sello = nodo.querySelector('.nt-sello');
+  if(sello) sello.textContent = fmtSello(n);
 }
-function vPicker(){
-  const rs = REGLAS.map(r => ['r', r.id, r.titulo, r.sind]);
-  const qs = BANCO.map(q => ['p', q.id, q.caso.replace(/[=`]/g,'').slice(0,90) + '…', q.examen + ' · ' + q.area]);
-  const todo = rs.concat(qs);
-  return '<h1>Traer de la biblioteca</h1>'
-    + '<p class="meta">se guardará en · ' + ruta.map(nombreDe).join(' › ') + '</p>'
-    + '<input class="search" id="pk-q" type="search" placeholder="Buscar entre '
-    + REGLAS.length + ' reglas y ' + BANCO.length + ' preguntas…" autocomplete="off">'
-    + '<div class="pick" id="pk-lista">' + filas(todo) + '</div>'
-    + '<div class="acts"><button class="act pri" id="pk-ok">Traer <span id="pk-n">'
-    + marcados.size + '</span></button><button class="act" id="pk-no">Cancelar</button></div>';
-}
-function filas(todo){
-  return todo.map(([c, id, t, s]) => {
-    const k = c + '::' + id;
-    return '<button class="i" data-k="' + k + '"><span class="box'
-      + (marcados.has(k) ? ' on' : '') + '"></span>'
-      + '<span class="mini-ty ' + c + '">' + (c === 'r' ? 'Regla' : 'Preg') + '</span>'
-      + '<span>' + t + '<br><small style="color:var(--ink3);font-size:12px">' + s + '</small></span></button>';
-  }).join('');
-}
-function enlazarPicker(){
-  const refrescar = () => {
-    $('#pk-lista').querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
-      const k = b.dataset.k;
-      marcados.has(k) ? marcados.delete(k) : marcados.add(k);
-      b.querySelector('.box').classList.toggle('on');
-      $('#pk-n').textContent = marcados.size;
-    });
-  };
-  refrescar();
-  $('#pk-q').oninput = e => {
-    const q = e.target.value.trim().toLowerCase();
-    const rs = REGLAS.filter(r => !q || (r.titulo + r.sind + r.cuerpo).toLowerCase().includes(q))
-      .map(r => ['r', r.id, r.titulo, r.sind]);
-    const qs = BANCO.filter(x => !q || (x.caso + x.pregunta).toLowerCase().includes(q))
-      .map(x => ['p', x.id, x.caso.replace(/[=`]/g,'').slice(0,90) + '…', x.examen + ' · ' + x.area]);
-    $('#pk-lista').innerHTML = filas(rs.concat(qs).slice(0,60));
-    refrescar();
-  };
-  $('#pk-ok').onclick = traer;
-  $('#pk-no').onclick = () => { marcados.clear(); vista = 'lista'; pintarEspacio(); };
+function aplicarModoEdicionNotas(nodo){
+  nodo.querySelectorAll('.nt-titulo,.nt-cuerpo').forEach(el => {
+    el.contentEditable = editando ? 'true' : 'false';
+    el.oninput = () => {
+      $('#ntEstadoGuardado').textContent = 'Guardando…';
+      clearTimeout(temporizadorNotas);
+      temporizadorNotas = setTimeout(() => guardarDesdeNotas(nodo), 700);
+    };
+  });
 }
 
 /* ═══ diálogos propios ═══
@@ -3722,33 +4727,24 @@ function yaEsta(clase, refId, padre){
 }
 function archivar(clase, refId, nom, padre){
   if(yaEsta(clase, refId, padre)){ toast('Ya estaba en esa carpeta'); return; }
-  ESP.nodos[nuevoId()] = {tipo:'ref', clase, refId, nom, padre, orden: hijosDe(padre).length};
+  ESP.nodos[nuevoId()] = {tipo:'ref', clase, refId, nom, padre, orden: hijosDe(padre).length, actualizado: new Date().toISOString()};
   guardarEspacio();
   toast('Guardado en ' + nombreDe(padre));
 }
-async function nuevaCarpetaEn(padre){
-  const nom = await pedirTexto('Nombre de la carpeta nueva');
-  if(!nom) return null;
-  const id = nuevoId();
-  ESP.nodos[id] = {tipo:'carpeta', nom, padre, cuerpo:'', orden: hijosDe(padre).length};
-  guardarEspacio();
-  return id;
-}
+// El picker solo ofrece secciones (carpeta madre > sección) como destino:
+// es el único nivel donde una referencia aparece en la columna de páginas.
 function elegirCarpeta(clase, refId, nom){
-  const linea = (id, nivel) => {
-    const sangria = 'style="padding-left:' + (nivel * 16) + 'px"';
-    return '<div class="sh-row">'
-      + '<button class="sh-nom" data-guardar="' + id + '" ' + sangria + '>'
-      + (nivel ? '<span class="sh-gu"></span>' : '') + nombreDe(id) + '</button>'
-      + '<button class="sh-mas" data-sub="' + id + '" title="Crear subcarpeta acá">+</button>'
-      + '</div>'
-      + hijosDe(id).filter(k => ESP.nodos[k].tipo === 'carpeta')
-          .map(k => linea(k, nivel + 1)).join('');
-  };
+  const filaSeccion = id => '<div class="sh-row"><button class="sh-nom" data-guardar="' + id
+    + '"><span class="sh-gu"></span>' + nombreDe(id) + '</button></div>';
+  const bloqueRaiz = id => '<div class="sh-row">'
+    + '<span class="sh-nom" style="font-weight:700;flex:1;padding:12px 13px;display:flex;align-items:center;gap:7px">' + nombreDe(id) + '</span>'
+    + '<button class="sh-mas" data-sub="' + id + '" title="Nueva sección acá">+</button></div>'
+    + hijosDe(id).filter(k => ESP.nodos[k].tipo === 'carpeta').map(filaSeccion).join('');
 
   const el = hoja('<p class="sh-t">Guardar en</p>'
     + '<p class="sh-s">' + nom.slice(0, 80) + (nom.length > 80 ? '…' : '') + '</p>'
-    + '<div class="sh-lista">' + linea('raiz', 0) + '</div>'
+    + '<div class="sh-lista">' + carpetasRaiz().map(bloqueRaiz).join('') + '</div>'
+    + '<button class="act" id="sh-carpeta" style="width:100%;text-align:center;margin-bottom:8px">+ Carpeta nueva</button>'
     + '<button class="act" id="sh-no" style="width:100%;text-align:center">Cancelar</button>');
 
   const cerrar = () => el.remove();
@@ -3759,10 +4755,27 @@ function elegirCarpeta(clase, refId, nom){
   });
   el.querySelectorAll('[data-sub]').forEach(b => b.onclick = async () => {
     const padre = b.dataset.sub;
-    cerrar();                                   // la hoja de texto reemplaza a ésta
-    const id = await nuevaCarpetaEn(padre);
-    if(id) archivar(clase, refId, nom, id);
+    cerrar();
+    const nomSec = await pedirTexto('Nombre de la sección nueva');
+    if(!nomSec) return;
+    const id = nuevoId();
+    ESP.nodos[id] = {tipo:'carpeta', nom:nomSec, padre, orden:hijosDe(padre).length, actualizado:new Date().toISOString()};
+    guardarEspacio();
+    archivar(clase, refId, nom, id);
   });
+  $('#sh-carpeta').onclick = async () => {
+    cerrar();
+    const nomRaiz = await pedirTexto('Nombre de la carpeta nueva');
+    if(!nomRaiz) return;
+    const idRaiz = nuevoId();
+    ESP.nodos[idRaiz] = {tipo:'carpeta', nom:nomRaiz, padre:'raiz', orden:hijosDe('raiz').length, actualizado:new Date().toISOString()};
+    const nomSec = await pedirTexto('Nombre de la sección nueva');
+    if(!nomSec){ guardarEspacio(); return; }
+    const idSec = nuevoId();
+    ESP.nodos[idSec] = {tipo:'carpeta', nom:nomSec, padre:idRaiz, orden:0, actualizado:new Date().toISOString()};
+    guardarEspacio();
+    archivar(clase, refId, nom, idSec);
+  };
 }
 function toast(txt){
   const prev = document.getElementById('toast');
@@ -3775,16 +4788,161 @@ function toast(txt){
 }
 
 /* ═══ pestañas ═══ */
+function medirAlturaNotas(){
+  document.documentElement.style.setProperty('--nt-top-h', document.querySelector('.top').offsetHeight + 'px');
+}
+window.addEventListener('resize', () => {
+  const activa = document.querySelector('.tab[aria-pressed="true"]');
+  if(activa && activa.dataset.go === 'espacio') medirAlturaNotas();
+});
 function irA(destino){
   document.querySelectorAll('.tab').forEach(t =>
     t.setAttribute('aria-pressed', t.dataset.go === destino));
   $('#strip').innerHTML = ''; $('#count').textContent = '';
   if(destino === 'biblioteca'){ pintarBiblioteca(); ir('#s-lib'); }
-  else if(destino === 'espacio'){ vista = 'lista'; pintarEspacio(); ir('#s-esp'); }
+  else if(destino === 'espacio'){
+    medirAlturaNotas();
+    carpetaSel = seccionSel = paginaSel = null;   // al abrir Notas se ve solo la lista de carpetas
+    pintarNotas();
+    ir('#s-esp');
+  }
   else { pintarChips(); pintarEstado(); ir('#s-setup'); }
 }
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => irA(t.dataset.go));
 $('#lib-q').oninput = pintarBiblioteca;
+
+/* ═══ Notas: barra de formato, botón de editar, creación, divisores ═══ */
+$('#ntBtnEditar').onclick = function(){
+  editando = !editando;
+  document.body.classList.toggle('nt-editando', editando);
+  this.setAttribute('aria-pressed', String(editando));
+  this.textContent = editando ? 'Listo' : 'Editar';
+  [$('#ntHojaA'), $('#ntHojaB')].forEach(aplicarModoEdicionNotas);
+  if(editando){ const c = $('#ntHojaA').querySelector('.nt-cuerpo'); if(c) c.focus(); }
+};
+$('#ntBtnDividir').onclick = function(){
+  dividido = !dividido;
+  ntPrefs.dividido = dividido;
+  this.setAttribute('aria-pressed', String(dividido));
+  this.textContent = dividido ? 'Cerrar el lado' : 'Abrir al lado';
+  guardarPreferenciasNotas();
+  pintarNotas();
+};
+document.querySelectorAll('#ntFormato [data-nt-cmd]').forEach(b => {
+  b.onmousedown = e => e.preventDefault();
+  b.onclick = () => document.execCommand(b.dataset.ntCmd, false, b.dataset.ntValor || null);
+});
+$('#ntBtnConducta').onmousedown = e => e.preventDefault();
+$('#ntBtnConducta').onclick = () => document.execCommand('insertHTML', false,
+  '<div class="nt-conducta"><div class="nt-quien">Regla de conducta</div><p>Escribí la regla acá.</p></div><p><br></p>');
+$('#ntSelEnlace').onchange = function(){
+  const p = ESP.nodos[this.value];
+  if(p) document.execCommand('insertHTML', false, '<a class="nt-vinculo" data-nt-ir="' + this.value + '">' + escHtml(p.nom) + '</a>');
+  this.value = '';
+};
+document.querySelectorAll('#s-esp [data-nt-nuevo]').forEach(b => {
+  b.onclick = e => {
+    e.stopPropagation();
+    const tipo = b.dataset.ntNuevo;
+    if(tipo === 'carpeta') crearCarpetaRaiz();
+    else if(tipo === 'seccion') crearSeccion();
+    else if(tipo === 'pagina') crearPagina();
+  };
+});
+$('#ntBtnIndice').onclick = e => {
+  e.stopPropagation();
+  carpetaSel = seccionSel = paginaSel = null;
+  pintarNotas();
+};
+
+/* ── anchos de columna: arrastre, doble clic, flechas, y persistencia en preferencias ── */
+const ntMarcoEl = $('#ntMarco'), ntPanesEl = $('#ntPanes');
+const LIMITES_NOTAS = { '--nt-c1':[120,340], '--nt-c2':[140,380], '--nt-c3':[160,460] };
+const POR_DEFECTO_NOTAS = { '--nt-c1':'184px', '--nt-c2':'208px', '--nt-c3':'236px', '--nt-pa':'1fr' };
+const contenedorDeNotas = d => d.dataset.ntEn === 'panes' ? ntPanesEl : ntMarcoEl;
+let ntGuardarAnchosTimer = null;
+function guardarAnchosNotas(){
+  clearTimeout(ntGuardarAnchosTimer);
+  ntGuardarAnchosTimer = setTimeout(() => {
+    ntPrefs.c1 = ntMarcoEl.style.getPropertyValue('--nt-c1') || ntPrefs.c1;
+    ntPrefs.c2 = ntMarcoEl.style.getPropertyValue('--nt-c2') || ntPrefs.c2;
+    ntPrefs.c3 = ntMarcoEl.style.getPropertyValue('--nt-c3') || ntPrefs.c3;
+    ntPrefs.pa = ntPanesEl.style.getPropertyValue('--nt-pa') || ntPrefs.pa;
+    guardarPreferenciasNotas();
+  }, 400);
+}
+function fijarAnchoNotas(divisor, px){
+  const v = divisor.dataset.ntArrastrar, caja = contenedorDeNotas(divisor);
+  if(v === '--nt-pa'){
+    const total = ntPanesEl.getBoundingClientRect().width;
+    const min = 260, max = Math.max(min, total - 260);
+    caja.style.setProperty(v, Math.min(Math.max(px, min), max) + 'px');
+  } else {
+    const [min, max] = LIMITES_NOTAS[v];
+    caja.style.setProperty(v, Math.min(Math.max(px, min), max) + 'px');
+  }
+  guardarAnchosNotas();
+}
+document.querySelectorAll('#s-esp .nt-divisor').forEach(divisor => {
+  const v = divisor.dataset.ntArrastrar;
+  divisor.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    divisor.setPointerCapture(e.pointerId);
+    divisor.classList.add('nt-activo');
+    document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none';
+    const izq = divisor.previousElementSibling.getBoundingClientRect().left;
+    const mover_ = ev => fijarAnchoNotas(divisor, ev.clientX - izq);
+    const soltar = () => {
+      divisor.classList.remove('nt-activo');
+      document.body.style.cursor = ''; document.body.style.userSelect = '';
+      divisor.removeEventListener('pointermove', mover_);
+      divisor.removeEventListener('pointerup', soltar);
+      divisor.removeEventListener('pointercancel', soltar);
+    };
+    divisor.addEventListener('pointermove', mover_);
+    divisor.addEventListener('pointerup', soltar);
+    divisor.addEventListener('pointercancel', soltar);
+  });
+  divisor.addEventListener('dblclick', () => {
+    contenedorDeNotas(divisor).style.setProperty(v, POR_DEFECTO_NOTAS[v]);
+    guardarAnchosNotas();
+  });
+  divisor.addEventListener('keydown', e => {
+    if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const actual = divisor.previousElementSibling.getBoundingClientRect().width;
+    fijarAnchoNotas(divisor, actual + (e.key === 'ArrowRight' ? 16 : -16));
+  });
+});
+document.querySelectorAll('#s-esp [data-nt-plegar]').forEach(b => {
+  const mapa = { ntCol1:'c1', ntCol2:'c2', ntCol3:'c3' };
+  b.onclick = e => {
+    e.stopPropagation();
+    const columna = document.getElementById(b.dataset.ntPlegar);
+    const plegada = columna.classList.toggle('nt-plegada');
+    const clave = mapa[b.dataset.ntPlegar];
+    ntMarcoEl.style.setProperty('--nt-' + clave, plegada ? '34px' : ntPrefs[clave]);
+    b.title = plegada ? 'Agrandar la columna' : 'Achicar la columna';
+    ntPrefs['p' + clave[1]] = plegada;
+    guardarPreferenciasNotas();
+  };
+});
+function aplicarPreferenciasNotas(){
+  ntMarcoEl.style.setProperty('--nt-c1', ntPrefs.c1);
+  ntMarcoEl.style.setProperty('--nt-c2', ntPrefs.c2);
+  ntMarcoEl.style.setProperty('--nt-c3', ntPrefs.c3);
+  ntPanesEl.style.setProperty('--nt-pa', ntPrefs.pa);
+  [['ntCol1','p1','c1'], ['ntCol2','p2','c2'], ['ntCol3','p3','c3']].forEach(([colId, clave, cvar]) => {
+    const columna = document.getElementById(colId);
+    const btn = columna.querySelector('[data-nt-plegar]');
+    columna.classList.toggle('nt-plegada', !!ntPrefs[clave]);
+    if(ntPrefs[clave]) ntMarcoEl.style.setProperty('--nt-' + cvar, '34px');
+    if(btn) btn.title = ntPrefs[clave] ? 'Agrandar la columna' : 'Achicar la columna';
+  });
+  dividido = !!ntPrefs.dividido;
+  $('#ntBtnDividir').setAttribute('aria-pressed', String(dividido));
+  $('#ntBtnDividir').textContent = dividido ? 'Cerrar el lado' : 'Abrir al lado';
+}
 
 /* ═══ init ═══ */
 $('#btn-start').onclick = () => arrancar(seleccion());
@@ -3816,8 +4974,31 @@ $('#btn-again').onclick = () => {
   const activa = document.querySelector('.tab[aria-pressed="true"]').dataset.go;
   irA(activa);
 };
+
+/* ═══ botón de sesión (magic link) ═══ */
+$('#btn-auth').onclick = async () => {
+  if(sbSesion){
+    const ok = await confirmar('¿Cerrar sesión de ' + sbSesion.user.email + '? '
+      + 'El progreso ya sincronizado queda guardado en la nube.', 'Cerrar sesión');
+    if(ok) await sb.auth.signOut();
+    return;
+  }
+  const email = await pedirTexto('Ingresá tu email para recibir el enlace de acceso');
+  if(!email) return;
+  const { error } = await sb.auth.signInWithOtp({
+    email, options: { emailRedirectTo: location.href.split('#')[0] }
+  });
+  toast(error ? 'No se pudo enviar el enlace' : 'Revisá tu correo: te mandamos un enlace de acceso');
+};
+
+/* ═══ init ═══ */
 pintarChips();
-cargar().then(cargarEspacio);
+if(sb){
+  sb.auth.onAuthStateChange((_evento, session) => manejarSesion(session));
+} else {
+  pintarAuth();
+  cargar().then(cargarEspacio).then(cargarPreferenciasNotas).then(aplicarPreferenciasNotas).then(cargarBibPersonal);
+}
 </script>
 </body>
 </html>
