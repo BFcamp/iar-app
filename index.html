@@ -497,6 +497,7 @@ h1{
 .nt-marco{
   display:grid;
   grid-template-columns:var(--nt-c1,184px) 6px var(--nt-c2,208px) 6px var(--nt-c3,236px) 6px minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr);
   height:100%;
 }
 .nt-divisor{background:var(--nt-linea);cursor:col-resize;position:relative;touch-action:none;}
@@ -574,7 +575,7 @@ body.nt-editando .nt-formato{display:flex;}
 .nt-formato .nt-conducta-btn{color:var(--nt-regla);font-size:12.5px;}
 .nt-formato select{font-family:inherit;font-size:12.5px;height:28px;border:1px solid var(--nt-linea);border-radius:4px;background:var(--nt-panel);color:var(--nt-tinta);padding:0 6px;max-width:190px;}
 
-.nt-panes{display:grid;grid-template-columns:minmax(0,1fr);background:var(--nt-linea);min-height:0;}
+.nt-panes{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);background:var(--nt-linea);min-height:0;}
 .nt-panes.nt-dividido{grid-template-columns:var(--nt-pa,1fr) 6px minmax(0,1fr);}
 .nt-panes:not(.nt-dividido) > .nt-divisor{display:none;}
 
