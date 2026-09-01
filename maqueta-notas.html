@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notas — maquetación</title>
+<style>
+  :root{
+    --papel:#EDF1F4; --panel:#FFFFFF; --tinta:#17293F; --tenue:#6B7C8F;
+    --linea:#D7DFE6; --seleccion:#0B5E5E; --regla:#9A6B12; --peligro:#A33A2B;
+    --nav: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --texto: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{margin:0;background:var(--papel);color:var(--tinta);font-family:var(--nav);font-size:15px;-webkit-font-smoothing:antialiased;}
+
+  .marco{
+    display:grid;
+    grid-template-columns:var(--c1,184px) 6px var(--c2,208px) 6px var(--c3,236px) 6px minmax(0,1fr);
+    height:100vh;
+  }
+  .divisor{background:var(--linea);cursor:col-resize;position:relative;touch-action:none;}
+  .divisor::after{content:"";position:absolute;inset:0 -4px;}
+  .divisor:hover,.divisor.activo{background:var(--seleccion);}
+  .divisor:focus-visible{outline:2px solid var(--seleccion);outline-offset:1px;}
+
+  .columna{border-right:1px solid var(--linea);background:var(--panel);display:flex;flex-direction:column;min-width:0;}
+  .columna:first-child{background:#E3E9EE;}
+
+  .encabezado{
+    padding:14px 16px 10px;font-size:11.5px;letter-spacing:.02em;color:var(--tenue);
+    border-bottom:1px solid var(--linea);display:flex;align-items:center;gap:8px;
+  }
+  .encabezado .util{margin-left:auto;display:flex;gap:2px;}
+  .encabezado button{border:0;background:none;cursor:pointer;color:var(--tenue);font-size:16px;line-height:1;padding:1px 4px;border-radius:3px;}
+  .encabezado button:hover{color:var(--tinta);background:#00000008;}
+  .encabezado .plegar{font-size:12px;}
+
+  .columna.plegada .lista{display:none;}
+  .columna.plegada .encabezado{writing-mode:vertical-rl;height:100%;padding:14px 9px;border-bottom:0;justify-content:flex-start;}
+  .columna.plegada .encabezado .util{margin-left:0;flex-direction:column;}
+  .columna.plegada .encabezado .plegar{transform:rotate(180deg);}
+
+  .lista{overflow-y:auto;padding:6px 0;flex:1;}
+
+  .item{
+    display:flex;align-items:center;gap:9px;width:100%;
+    padding:8px 16px;cursor:pointer;color:var(--tinta);
+    border-left:3px solid transparent;user-select:none;
+  }
+  .item:hover{background:#0B5E5E0A;}
+  .item[aria-current="true"]{background:#0B5E5E14;border-left-color:var(--seleccion);font-weight:600;}
+  .item:focus-visible{outline:2px solid var(--seleccion);outline-offset:-2px;}
+  .item .punto{width:7px;height:7px;border-radius:50%;flex:none;background:var(--marca,#B9C4CE);}
+  .item .rotulo{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .item .cuenta{font-size:11.5px;color:var(--tenue);font-variant-numeric:tabular-nums;}
+  .item.sub{padding-left:38px;font-size:14px;}
+  .item.sub .rotulo{color:#3D5165;}
+  .item.indice .rotulo{font-style:italic;color:var(--tenue);}
+
+  .item .mini{
+    display:none;border:0;background:none;cursor:pointer;
+    color:var(--tenue);font-size:13px;line-height:1;padding:2px 4px;border-radius:3px;
+  }
+  .item:hover .mini,.item[aria-current="true"] .mini{display:block;}
+  .item .mini:hover{background:#00000012;color:var(--tinta);}
+  .item .mini.borrar:hover{color:var(--peligro);}
+
+  .item.arrastrando{opacity:.35;}
+  .item.destino-arriba{box-shadow:inset 0 2px 0 var(--seleccion);}
+  .item.destino-abajo{box-shadow:inset 0 -2px 0 var(--seleccion);}
+
+  .lectura{display:grid;grid-template-rows:auto auto minmax(0,1fr);background:var(--papel);min-width:0;}
+  .barra{display:flex;align-items:center;gap:14px;padding:0 18px;height:44px;border-bottom:1px solid var(--linea);background:var(--panel);}
+  .miga{font-size:12.5px;color:var(--tenue);}
+  .miga b{font-weight:600;color:var(--tinta);}
+  .estado-guardado{font-size:11.5px;color:var(--tenue);min-width:74px;}
+  .acciones{margin-left:auto;display:flex;gap:6px;}
+  .acciones button{font:inherit;font-size:12.5px;padding:5px 11px;border-radius:4px;border:1px solid var(--linea);background:var(--panel);color:var(--tinta);cursor:pointer;}
+  .acciones button:hover{border-color:#B4C0CB;}
+  .acciones button[aria-pressed="true"]{background:var(--seleccion);border-color:var(--seleccion);color:#fff;}
+
+  .formato{display:none;align-items:center;gap:4px;padding:7px 18px;background:#F6F8FA;border-bottom:1px solid var(--linea);flex-wrap:wrap;}
+  body.editando .formato{display:flex;}
+  .formato button{font:inherit;font-size:13px;min-width:30px;height:28px;padding:0 8px;border:1px solid transparent;border-radius:4px;background:none;color:var(--tinta);cursor:pointer;}
+  .formato button:hover{background:#0B5E5E12;}
+  .formato .sep{width:1px;height:18px;background:var(--linea);margin:0 5px;}
+  .formato .negrita{font-weight:700;}
+  .formato .italica{font-style:italic;font-family:var(--texto);}
+  .formato .conducta-btn{color:var(--regla);font-size:12.5px;}
+  .formato select{font:inherit;font-size:12.5px;height:28px;border:1px solid var(--linea);border-radius:4px;background:var(--panel);color:var(--tinta);padding:0 6px;max-width:190px;}
+
+  .panes{display:grid;grid-template-columns:minmax(0,1fr);background:var(--linea);min-height:0;}
+  .panes.dividido{grid-template-columns:var(--pa,1fr) 6px minmax(0,1fr);}
+  .panes:not(.dividido) > .divisor{display:none;}
+
+  .hoja{background:var(--panel);overflow-y:auto;padding:34px 42px 60px;min-width:0;}
+  .hoja .fijado{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--tenue);margin-bottom:20px;}
+  .hoja .fijado span{width:6px;height:6px;border-radius:50%;background:var(--marca,#B9C4CE);}
+  .hoja h1{font-family:var(--texto);font-size:27px;font-weight:600;line-height:1.2;margin:0 0 4px;}
+  .hoja .sello{font-size:12px;color:var(--tenue);margin-bottom:26px;}
+  .hoja p,.hoja li{font-family:var(--texto);font-size:16.5px;line-height:1.62;max-width:62ch;}
+  .hoja p{margin:0 0 15px;}
+  .hoja h2{font-family:var(--texto);font-size:17px;font-weight:600;margin:28px 0 10px;}
+  .hoja ul{margin:0 0 16px;padding-left:20px;}
+  .hoja li{margin-bottom:7px;}
+
+  body.editando [contenteditable]{outline:none;}
+  body.editando [contenteditable]:focus{box-shadow:-16px 0 0 -15px var(--seleccion);}
+  body.editando .cuerpo{min-height:220px;}
+  [contenteditable]:empty::before{content:attr(data-vacio);color:#A9B6C2;}
+
+  .conducta{border-left:3px solid var(--regla);background:#9A6B120D;padding:13px 16px;margin:22px 0;max-width:62ch;}
+  .conducta .quien{font-size:11.5px;color:var(--regla);margin-bottom:5px;font-family:var(--nav);}
+  .conducta p{margin:0;font-size:16px;}
+
+  .vinculo{color:var(--seleccion);text-decoration:none;border-bottom:1px solid #0B5E5E4D;cursor:pointer;}
+  .vinculo:hover{border-bottom-color:var(--seleccion);}
+
+  .indice-lista{list-style:none;padding:0;margin:0;max-width:62ch;}
+  .indice-lista li{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid var(--linea);font-family:var(--texto);font-size:16px;}
+  .indice-lista .n{font-family:var(--nav);font-size:11.5px;color:var(--tenue);min-width:22px;font-variant-numeric:tabular-nums;}
+  .indice-lista .estado{margin-left:auto;font-family:var(--nav);font-size:11.5px;color:var(--tenue);}
+
+  .vacio{display:flex;align-items:center;justify-content:center;height:100%;padding:40px;text-align:center;}
+  .vacio p{color:var(--tenue);font-family:var(--nav);font-size:14px;max-width:30ch;}
+
+  @media (max-width:1080px){ .hoja{padding:26px 28px 50px;} }
+  @media (max-width:760px){
+    .marco{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr);height:auto;}
+    .columna{border-right:0;border-bottom:1px solid var(--linea);}
+    .columna.plegada .encabezado{writing-mode:horizontal-tb;height:auto;}
+    .lista{max-height:160px;}
+    .marco > .divisor{display:none;}
+    .panes.dividido{grid-template-columns:minmax(0,1fr);}
+    .panes.dividido > .divisor{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="marco">
+  <nav class="columna" id="col1" aria-label="Carpetas">
+    <div class="encabezado">Notas<span class="util">
+      <button title="Nueva carpeta" data-nuevo="carpeta">+</button>
+      <button class="plegar" data-plegar="col1" title="Achicar la columna">‹</button></span></div>
+    <div class="lista" id="colCarpetas"></div>
+  </nav>
+
+  <div class="divisor" data-arrastrar="--c1" role="separator" tabindex="0" aria-label="Ancho de carpetas"></div>
+
+  <nav class="columna" id="col2" aria-label="Secciones">
+    <div class="encabezado"><span id="tituloSecciones">Secciones</span><span class="util">
+      <button title="Nueva sección" data-nuevo="seccion">+</button>
+      <button class="plegar" data-plegar="col2" title="Achicar la columna">‹</button></span></div>
+    <div class="lista" id="colSecciones"></div>
+  </nav>
+
+  <div class="divisor" data-arrastrar="--c2" role="separator" tabindex="0" aria-label="Ancho de secciones"></div>
+
+  <nav class="columna" id="col3" aria-label="Páginas">
+    <div class="encabezado"><span id="tituloPaginas">Páginas</span><span class="util">
+      <button title="Nueva página" data-nuevo="pagina">+</button>
+      <button class="plegar" data-plegar="col3" title="Achicar la columna">‹</button></span></div>
+    <div class="lista" id="colPaginas"></div>
+  </nav>
+
+  <div class="divisor" data-arrastrar="--c3" role="separator" tabindex="0" aria-label="Ancho de páginas"></div>
+
+  <main class="lectura">
+    <div class="barra">
+      <div class="miga" id="miga"></div>
+      <div class="acciones">
+        <span class="estado-guardado" id="estadoGuardado"></span>
+        <button id="btnDividir" aria-pressed="false">Abrir al lado</button>
+        <button id="btnEditar" aria-pressed="false">Editar</button>
+      </div>
+    </div>
+
+    <div class="formato" id="formato">
+      <button class="negrita" data-cmd="bold" title="Negrita">N</button>
+      <button class="italica" data-cmd="italic" title="Itálica">C</button>
+      <span class="sep"></span>
+      <button data-cmd="formatBlock" data-valor="h2" title="Subtítulo">Subtítulo</button>
+      <button data-cmd="insertUnorderedList" title="Lista">Lista</button>
+      <span class="sep"></span>
+      <button class="conducta-btn" id="btnConducta">Regla de conducta</button>
+      <span class="sep"></span>
+      <select id="selEnlace"><option value="">Enlazar a otra página…</option></select>
+    </div>
+
+    <div class="panes" id="panes">
+      <article class="hoja" id="hojaA"></article>
+      <div class="divisor" data-arrastrar="--pa" data-en="panes" role="separator" tabindex="0" aria-label="Ancho del panel izquierdo"></div>
+      <article class="hoja" id="hojaB" hidden></article>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ---------- datos ---------- */
+
+const datos = {
+  urgencias: { nombre:"Urgencias I", marca:"#B4402F", secciones:[
+      { id:"toracico", nombre:"Dolor torácico", paginas:[
+          { id:"scacest", titulo:"SCA con elevación del ST", sello:"Editado hace 2 días · 3 preguntas ligadas",
+            cuerpo:`<p>Elevación persistente del ST en dos derivaciones contiguas. El diagnóstico es electrocardiográfico: no se espera la troponina para decidir.</p>
+<div class="conducta"><div class="quien">Regla de conducta</div><p>Ante ST elevado, el tiempo manda sobre el estudio. Angioplastia primaria si se llega antes de 120 minutos; si no, fibrinolítico.</p></div>
+<h2>Lo que preguntan</h2>
+<ul><li>Ventana temporal para la reperfusión</li><li>Contraindicaciones del fibrinolítico</li><li>Cara comprometida según derivaciones</li></ul>
+<p>Contrastar con <a class="vinculo" data-ir="tep">tromboembolismo pulmonar</a>, que comparte el motivo de consulta y cambia toda la conducta.</p>`,
+            subpaginas:[
+              { id:"derivaciones", titulo:"Localización por derivaciones", sello:"Editado la semana pasada",
+                cuerpo:`<p>Mapa rápido para no perder tiempo en el examen.</p>
+<ul><li>DII, DIII, aVF — inferior</li><li>V1 a V4 — anteroseptal</li><li>DI, aVL, V5, V6 — lateral</li></ul>
+<div class="conducta"><div class="quien">Regla de conducta</div><p>Infarto inferior obliga a pedir derivaciones derechas antes de dar nitratos.</p></div>` }] },
+          { id:"tep", titulo:"Tromboembolismo pulmonar", sello:"Editado hace 5 días · 2 preguntas ligadas",
+            cuerpo:`<p>Disnea súbita con dolor pleurítico y factor de riesgo. La sospecha clínica define qué estudio pedir, no al revés.</p>
+<div class="conducta"><div class="quien">Regla de conducta</div><p>Con probabilidad baja, dímero D. Con probabilidad alta, angiotomografía directa y anticoagulación empírica mientras se confirma.</p></div>
+<p>El error frecuente es pedir dímero D en el paciente de alta probabilidad: un resultado normal no descarta y se pierde tiempo.</p>` },
+          { id:"diseccion", titulo:"Disección aórtica", sello:"Sin abrir", cuerpo:`` }] },
+      { id:"shock", nombre:"Shock", paginas:[
+          { id:"clasif", titulo:"Distinguir los cuatro shocks", sello:"Editado ayer",
+            cuerpo:`<p>La diferencia se juega en dos datos de la cabecera: relleno y perfusión periférica.</p>
+<div class="conducta"><div class="quien">Regla de conducta</div><p>Piel fría con yugulares planas es hipovolémico; piel fría con yugulares ingurgitadas es cardiogénico u obstructivo.</p></div>` }] }] },
+  endocrino: { nombre:"Endócrino", marca:"#1D6B4F", secciones:[
+      { id:"diabetes", nombre:"Diabetes", paginas:[
+          { id:"cad", titulo:"Cetoacidosis diabética", sello:"Editado hace 3 días",
+            cuerpo:`<p>Hiperglucemia, acidosis metabólica con anión gap elevado y cetonemia.</p>
+<div class="conducta"><div class="quien">Regla de conducta</div><p>Primero volumen, después potasio, y recién entonces insulina. Si el potasio está bajo, la insulina espera.</p></div>` }] },
+      { id:"tiroides", nombre:"Tiroides", paginas:[
+          { id:"nodulo", titulo:"Nódulo tiroideo", sello:"Sin abrir", cuerpo:`` }] }] },
+  pediatria: { nombre:"Pediatría", marca:"#7A4E9C", secciones:[
+      { id:"fiebre", nombre:"Fiebre sin foco", paginas:[
+          { id:"lactante", titulo:"Lactante febril menor de 3 meses", sello:"Editado hace una semana",
+            cuerpo:`<p>La edad decide la conducta antes que cualquier score.</p>
+<div class="conducta"><div class="quien">Regla de conducta</div><p>Menor de 1 mes con fiebre: internación, cultivos completos y antibiótico empírico, siempre.</p></div>` }] }] },
+  cirugia:{ nombre:"Cirugía", marca:"#2F5F8A", secciones:[
+      { id:"abdomen", nombre:"Abdomen agudo", paginas:[
+          { id:"apendicitis", titulo:"Apendicitis", sello:"Sin abrir", cuerpo:`` }] }] },
+  obstetricia:{ nombre:"Obstetricia", marca:"#B0567C", secciones:[
+      { id:"hta", nombre:"Estados hipertensivos", paginas:[
+          { id:"preeclampsia", titulo:"Preeclampsia", sello:"Sin abrir", cuerpo:`` }] }] },
+  farmaco:{ nombre:"Fármaco", marca:"#8A7320", secciones:[
+      { id:"atb", nombre:"Antibióticos", paginas:[
+          { id:"espectro", titulo:"Elección por foco", sello:"Sin abrir", cuerpo:`` }] }] }
+};
+
+let orden = Object.keys(datos);          // el orden de las carpetas es editable
+let carpetaSel="urgencias", seccionSel="toracico", paginaSel="scacest";
+let dividido=false, paginaB="tep", editando=false;
+
+const $ = (id) => document.getElementById(id);
+const carpeta = () => datos[carpetaSel];
+const seccion = () => carpeta().secciones.find(s=>s.id===seccionSel) || carpeta().secciones[0];
+
+function planas(sec){
+  const out=[];
+  sec.paginas.forEach(p=>{
+    out.push({pagina:p,nivel:0,padre:null});
+    (p.subpaginas||[]).forEach(sp=>out.push({pagina:sp,nivel:1,padre:p}));
+  });
+  return out;
+}
+function todasLasPaginas(){
+  const out=[];
+  orden.forEach(clave=>datos[clave].secciones.forEach(sec=>
+    planas(sec).forEach(e=>out.push({
+      id:e.pagina.id,
+      etiqueta:datos[clave].nombre+" › "+sec.nombre+" › "+e.pagina.titulo }))));
+  return out;
+}
+function buscarPagina(id){
+  for(const clave of orden)
+    for(const sec of datos[clave].secciones)
+      for(const p of sec.paginas){
+        if(p.id===id) return p;
+        for(const sp of (p.subpaginas||[])) if(sp.id===id) return sp;
+      }
+  return null;
+}
+
+/* ---------- construcción de la lista ---------- */
+
+function crearItem(cfg){
+  const el=document.createElement("div");
+  el.className="item"+(cfg.clase?" "+cfg.clase:"");
+  el.setAttribute("role","button");
+  el.tabIndex=0;
+  el.setAttribute("aria-current", cfg.activo?"true":"false");
+  el.draggable=!!cfg.arrastrable;
+  el.dataset.indice=cfg.indice;
+  el.dataset.zona=cfg.zona||"";
+
+  if(cfg.marca) el.innerHTML+=`<span class="punto" style="--marca:${cfg.marca}"></span>`;
+  el.innerHTML+=`<span class="rotulo">${cfg.rotulo}</span>`;
+  if(cfg.cuenta!=null) el.innerHTML+=`<span class="cuenta">${cfg.cuenta}</span>`;
+
+  (cfg.mini||[]).forEach(m=>{
+    const b=document.createElement("button");
+    b.className="mini"+(m.peligro?" borrar":"");
+    b.textContent=m.icono; b.title=m.titulo;
+    b.onclick=(e)=>{ e.stopPropagation(); m.accion(); };
+    el.appendChild(b);
+  });
+
+  el.onclick=cfg.alClic;
+  el.onkeydown=(e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); cfg.alClic(); } };
+  return el;
+}
+
+/* ---------- reordenar arrastrando ---------- */
+
+let arrastre=null;
+
+function habilitarArrastre(contenedor, alSoltar){
+  contenedor.querySelectorAll('.item[draggable="true"]').forEach(el=>{
+    el.addEventListener("dragstart",(e)=>{
+      arrastre={ zona:el.dataset.zona, indice:+el.dataset.indice };
+      el.classList.add("arrastrando");
+      e.dataTransfer.effectAllowed="move";
+      e.dataTransfer.setData("text/plain","");
+    });
+    el.addEventListener("dragend",()=>{
+      el.classList.remove("arrastrando");
+      contenedor.querySelectorAll(".item").forEach(i=>i.classList.remove("destino-arriba","destino-abajo"));
+      arrastre=null;
+    });
+    el.addEventListener("dragover",(e)=>{
+      if(!arrastre||arrastre.zona!==el.dataset.zona) return;
+      e.preventDefault();
+      const caja=el.getBoundingClientRect();
+      const arriba=(e.clientY-caja.top)<caja.height/2;
+      el.classList.toggle("destino-arriba",arriba);
+      el.classList.toggle("destino-abajo",!arriba);
+    });
+    el.addEventListener("dragleave",()=>el.classList.remove("destino-arriba","destino-abajo"));
+    el.addEventListener("drop",(e)=>{
+      if(!arrastre||arrastre.zona!==el.dataset.zona) return;
+      e.preventDefault();
+      const caja=el.getBoundingClientRect();
+      const arriba=(e.clientY-caja.top)<caja.height/2;
+      let destino=+el.dataset.indice+(arriba?0:1);
+      const origen=arrastre.indice;
+      if(destino>origen) destino--;
+      if(destino!==origen) alSoltar(origen,destino,el.dataset.zona);
+      pintar();
+    });
+  });
+}
+
+function mover(lista,de,a){ lista.splice(a,0,lista.splice(de,1)[0]); }
+
+/* ---------- borrar ---------- */
+
+function borrarCarpeta(clave){
+  if(orden.length<=1){ alert("Tiene que quedar al menos una carpeta."); return; }
+  const d=datos[clave];
+  const paginas=d.secciones.reduce((n,s)=>n+planas(s).length,0);
+  if(!confirm(`¿Borrar "${d.nombre}"? Se van sus ${d.secciones.length} secciones y ${paginas} páginas.`)) return;
+  orden=orden.filter(k=>k!==clave); delete datos[clave];
+  if(carpetaSel===clave){
+    carpetaSel=orden[0];
+    seccionSel=carpeta().secciones[0].id;
+    paginaSel="indice:"+seccionSel;
+  }
+  pintar();
+}
+function borrarSeccion(id){
+  const c=carpeta();
+  if(c.secciones.length<=1){ alert("La carpeta necesita al menos una sección."); return; }
+  const s=c.secciones.find(x=>x.id===id);
+  if(!confirm(`¿Borrar la sección "${s.nombre}" y sus ${planas(s).length} páginas?`)) return;
+  c.secciones=c.secciones.filter(x=>x.id!==id);
+  if(seccionSel===id){ seccionSel=c.secciones[0].id; paginaSel="indice:"+seccionSel; }
+  pintar();
+}
+function borrarPagina(id){
+  const sec=seccion();
+  const entrada=planas(sec).find(e=>e.pagina.id===id);
+  if(!entrada) return;
+  const p=entrada.pagina;
+  const hijas=(p.subpaginas||[]).length;
+  const escrita=p.cuerpo.trim().length>0;
+  if(escrita||hijas){
+    const detalle=hijas?` y sus ${hijas} subpáginas`:"";
+    if(!confirm(`¿Borrar "${p.titulo}"${detalle}? Tiene texto escrito.`)) return;
+  }
+  if(entrada.padre) entrada.padre.subpaginas=entrada.padre.subpaginas.filter(x=>x.id!==id);
+  else sec.paginas=sec.paginas.filter(x=>x.id!==id);
+  if(paginaSel===id) paginaSel="indice:"+sec.id;
+  if(paginaB===id) paginaB="indice:"+sec.id;
+  pintar();
+}
+
+/* ---------- crear ---------- */
+
+const nuevoId=(base)=>base+"_"+Math.random().toString(36).slice(2,7);
+const paginaEnBlanco=()=>({ id:nuevoId("pag"), titulo:"Página sin título", sello:"Recién creada", cuerpo:"" });
+
+function nuevaSubpagina(padre){
+  const sp=Object.assign(paginaEnBlanco(),{titulo:"Subpágina sin título"});
+  (padre.subpaginas=padre.subpaginas||[]).push(sp);
+  paginaSel=sp.id;
+  pintar();
+}
+
+/* ---------- pintado ---------- */
+
+function pintar(){
+  const c=carpeta();
+
+  const cols=$("colCarpetas"); cols.innerHTML="";
+  orden.forEach((clave,i)=>{
+    const d=datos[clave];
+    cols.appendChild(crearItem({
+      rotulo:d.nombre, marca:d.marca, activo:clave===carpetaSel,
+      indice:i, zona:"carpetas", arrastrable:true,
+      mini:[{ icono:"×", titulo:"Borrar carpeta", peligro:true, accion:()=>borrarCarpeta(clave) }],
+      alClic:()=>{ carpetaSel=clave; seccionSel=d.secciones[0].id; paginaSel="indice:"+seccionSel; pintar(); }
+    }));
+  });
+  habilitarArrastre(cols,(de,a)=>mover(orden,de,a));
+
+  $("tituloSecciones").textContent=c.nombre;
+  const secs=$("colSecciones"); secs.innerHTML="";
+  c.secciones.forEach((s,i)=>{
+    secs.appendChild(crearItem({
+      rotulo:s.nombre, activo:s.id===seccionSel, cuenta:s.paginas.length,
+      indice:i, zona:"secciones", arrastrable:true,
+      mini:[{ icono:"×", titulo:"Borrar sección", peligro:true, accion:()=>borrarSeccion(s.id) }],
+      alClic:()=>{ seccionSel=s.id; paginaSel="indice:"+s.id; pintar(); }
+    }));
+  });
+  habilitarArrastre(secs,(de,a)=>mover(c.secciones,de,a));
+
+  const sec=seccion();
+  $("tituloPaginas").textContent=sec.nombre;
+  const pags=$("colPaginas"); pags.innerHTML="";
+  pags.appendChild(crearItem({
+    rotulo:"Índice de la sección", clase:"indice", indice:-1,
+    activo:paginaSel==="indice:"+sec.id,
+    alClic:()=>{ paginaSel="indice:"+sec.id; pintar(); }
+  }));
+
+  sec.paginas.forEach((p,i)=>{
+    pags.appendChild(crearItem({
+      rotulo:p.titulo, activo:p.id===paginaSel, indice:i,
+      zona:"paginas", arrastrable:true,
+      mini:[
+        { icono:"+", titulo:"Nueva subpágina", accion:()=>nuevaSubpagina(p) },
+        { icono:"×", titulo:"Borrar página", peligro:true, accion:()=>borrarPagina(p.id) }],
+      alClic:()=>{ paginaSel=p.id; pintar(); }
+    }));
+    (p.subpaginas||[]).forEach((sp,j)=>{
+      pags.appendChild(crearItem({
+        rotulo:sp.titulo, activo:sp.id===paginaSel, clase:"sub", indice:j,
+        zona:"sub:"+p.id, arrastrable:true,
+        mini:[{ icono:"×", titulo:"Borrar subpágina", peligro:true, accion:()=>borrarPagina(sp.id) }],
+        alClic:()=>{ paginaSel=sp.id; pintar(); }
+      }));
+    });
+  });
+  habilitarArrastre(pags,(de,a,zona)=>{
+    if(zona==="paginas") mover(sec.paginas,de,a);
+    else {
+      const padre=sec.paginas.find(p=>p.id===zona.slice(4));
+      if(padre) mover(padre.subpaginas,de,a);
+    }
+  });
+
+  $("miga").innerHTML=`${c.nombre} <span style="opacity:.5">/</span> ${sec.nombre} <span style="opacity:.5">/</span> <b>${
+    paginaSel.startsWith("indice:")?"Índice":(buscarPagina(paginaSel)||{}).titulo||""}</b>`;
+
+  render($("hojaA"), paginaSel);
+  $("panes").classList.toggle("dividido", dividido);
+  $("hojaB").hidden=!dividido;
+  if(dividido) render($("hojaB"), paginaB);
+
+  $("selEnlace").innerHTML=`<option value="">Enlazar a otra página…</option>`+
+    todasLasPaginas().map(p=>`<option value="${p.id}">${p.etiqueta}</option>`).join("");
+}
+
+function render(nodo,id){
+  const c=carpeta();
+  if(id.startsWith("indice:")){
+    const sec=c.secciones.find(s=>s.id===id.slice(7))||seccion();
+    nodo.innerHTML=`<div class="fijado"><span style="--marca:${c.marca}"></span>${c.nombre}</div>
+      <h1>${sec.nombre}</h1><div class="sello">${sec.paginas.length} páginas en esta sección</div>
+      <ul class="indice-lista">${planas(sec).map((e,i)=>
+        `<li><span class="n">${e.nivel?"":(i+1)}</span>
+         <a class="vinculo" data-ir="${e.pagina.id}" style="${e.nivel?"margin-left:14px":""}">${e.pagina.titulo}</a>
+         <span class="estado">${e.pagina.cuerpo.trim()?"escrita":"vacía"}</span></li>`).join("")}</ul>`;
+    delete nodo.dataset.pagina;
+  } else {
+    const p=buscarPagina(id);
+    if(!p){ nodo.innerHTML=`<div class="vacio"><p>Elegí una página para leerla acá.</p></div>`; return; }
+    nodo.innerHTML=`<div class="fijado"><span style="--marca:${c.marca}"></span>${c.nombre}</div>
+      <h1 class="titulo" data-vacio="Sin título">${p.titulo}</h1>
+      <div class="sello">${p.sello}</div>
+      <div class="cuerpo" data-vacio="Escribí acá. La regla de conducta va al final.">${p.cuerpo}</div>`;
+    nodo.dataset.pagina=p.id;
+    aplicarModoEdicion(nodo);
+  }
+  nodo.querySelectorAll("[data-ir]").forEach(a=>{
+    a.onclick=()=>{
+      if(editando) return;
+      const destino=a.getAttribute("data-ir");
+      if(nodo.id==="hojaB") paginaB=destino; else paginaSel=destino;
+      pintar();
+    };
+  });
+}
+
+/* ---------- edición ---------- */
+
+let temporizador=null;
+function marcarGuardado(){
+  const e=$("estadoGuardado"); e.textContent="Guardado";
+  setTimeout(()=>{ if(e.textContent==="Guardado") e.textContent=""; },1600);
+}
+function guardarDesde(nodo){
+  const p=buscarPagina(nodo.dataset.pagina);
+  if(!p) return;
+  const titulo=nodo.querySelector(".titulo"), cuerpo=nodo.querySelector(".cuerpo");
+  if(titulo) p.titulo=titulo.textContent.trim()||"Sin título";
+  if(cuerpo) p.cuerpo=cuerpo.innerHTML;
+  p.sello="Editado recién";
+  marcarGuardado();
+  const item=[...$("colPaginas").querySelectorAll(".item")].find(b=>b.getAttribute("aria-current")==="true");
+  if(item&&titulo) item.querySelector(".rotulo").textContent=p.titulo;
+}
+function aplicarModoEdicion(nodo){
+  nodo.querySelectorAll(".titulo,.cuerpo").forEach(el=>{
+    el.contentEditable=editando?"true":"false";
+    el.oninput=()=>{
+      $("estadoGuardado").textContent="Guardando…";
+      clearTimeout(temporizador);
+      temporizador=setTimeout(()=>guardarDesde(nodo),700);
+    };
+  });
+}
+
+$("btnEditar").onclick=function(){
+  editando=!editando;
+  document.body.classList.toggle("editando",editando);
+  this.setAttribute("aria-pressed",String(editando));
+  this.textContent=editando?"Listo":"Editar";
+  [$("hojaA"),$("hojaB")].forEach(aplicarModoEdicion);
+  if(editando){ const c=$("hojaA").querySelector(".cuerpo"); if(c) c.focus(); }
+};
+
+document.querySelectorAll(".formato [data-cmd]").forEach(b=>{
+  b.onmousedown=(e)=>e.preventDefault();
+  b.onclick=()=>document.execCommand(b.dataset.cmd,false,b.dataset.valor||null);
+});
+$("btnConducta").onmousedown=(e)=>e.preventDefault();
+$("btnConducta").onclick=()=>document.execCommand("insertHTML",false,
+  `<div class="conducta"><div class="quien">Regla de conducta</div><p>Escribí la regla acá.</p></div><p><br></p>`);
+$("selEnlace").onchange=function(){
+  const p=buscarPagina(this.value);
+  if(p) document.execCommand("insertHTML",false,`<a class="vinculo" data-ir="${p.id}">${p.titulo}</a>`);
+  this.value="";
+};
+
+document.querySelectorAll("[data-nuevo]").forEach(b=>{
+  b.onclick=(e)=>{
+    e.stopPropagation();
+    const tipo=b.dataset.nuevo;
+    if(tipo==="carpeta"){
+      const id=nuevoId("carp");
+      datos[id]={ nombre:"Carpeta nueva", marca:"#7E8C99",
+        secciones:[{ id:nuevoId("sec"), nombre:"Sección 1", paginas:[paginaEnBlanco()] }] };
+      orden.push(id); carpetaSel=id;
+      seccionSel=datos[id].secciones[0].id; paginaSel=datos[id].secciones[0].paginas[0].id;
+    }
+    if(tipo==="seccion"){
+      const s={ id:nuevoId("sec"), nombre:"Sección nueva", paginas:[paginaEnBlanco()] };
+      carpeta().secciones.push(s); seccionSel=s.id; paginaSel=s.paginas[0].id;
+    }
+    if(tipo==="pagina"){
+      const p=paginaEnBlanco();
+      seccion().paginas.push(p); paginaSel=p.id;
+    }
+    pintar();
+  };
+});
+
+/* ---------- achicar y agrandar ---------- */
+
+const marco=document.querySelector(".marco"), panes=$("panes");
+const LIMITES={ "--c1":[120,340], "--c2":[140,380], "--c3":[160,460] };
+const POR_DEFECTO={ "--c1":"184px", "--c2":"208px", "--c3":"236px", "--pa":"1fr" };
+const contenedorDe=(d)=>d.dataset.en==="panes"?panes:marco;
+
+function fijarAncho(divisor,px){
+  const v=divisor.dataset.arrastrar, caja=contenedorDe(divisor);
+  if(v==="--pa"){
+    const total=panes.getBoundingClientRect().width;
+    const min=260, max=Math.max(min,total-260);
+    caja.style.setProperty(v,Math.min(Math.max(px,min),max)+"px");
+  } else {
+    const [min,max]=LIMITES[v];
+    caja.style.setProperty(v,Math.min(Math.max(px,min),max)+"px");
+  }
+}
+
+document.querySelectorAll(".divisor").forEach(divisor=>{
+  const v=divisor.dataset.arrastrar;
+  divisor.addEventListener("pointerdown",(e)=>{
+    e.preventDefault();
+    divisor.setPointerCapture(e.pointerId);
+    divisor.classList.add("activo");
+    document.body.style.cursor="col-resize"; document.body.style.userSelect="none";
+    const izq=divisor.previousElementSibling.getBoundingClientRect().left;
+    const mover=(ev)=>fijarAncho(divisor,ev.clientX-izq);
+    const soltar=()=>{
+      divisor.classList.remove("activo");
+      document.body.style.cursor=""; document.body.style.userSelect="";
+      divisor.removeEventListener("pointermove",mover);
+      divisor.removeEventListener("pointerup",soltar);
+      divisor.removeEventListener("pointercancel",soltar);
+    };
+    divisor.addEventListener("pointermove",mover);
+    divisor.addEventListener("pointerup",soltar);
+    divisor.addEventListener("pointercancel",soltar);
+  });
+  divisor.addEventListener("dblclick",()=>contenedorDe(divisor).style.setProperty(v,POR_DEFECTO[v]));
+  divisor.addEventListener("keydown",(e)=>{
+    if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight") return;
+    e.preventDefault();
+    const actual=divisor.previousElementSibling.getBoundingClientRect().width;
+    fijarAncho(divisor,actual+(e.key==="ArrowRight"?16:-16));
+  });
+});
+
+document.querySelectorAll("[data-plegar]").forEach(b=>{
+  b.onclick=(e)=>{
+    e.stopPropagation();
+    const columna=$(b.dataset.plegar);
+    const plegada=columna.classList.toggle("plegada");
+    const v={col1:"--c1",col2:"--c2",col3:"--c3"}[b.dataset.plegar];
+    marco.style.setProperty(v,plegada?"34px":POR_DEFECTO[v]);
+    b.title=plegada?"Agrandar la columna":"Achicar la columna";
+  };
+});
+
+$("btnDividir").onclick=function(){
+  dividido=!dividido;
+  this.setAttribute("aria-pressed",String(dividido));
+  this.textContent=dividido?"Cerrar el lado":"Abrir al lado";
+  pintar();
+};
+
+pintar();
+</script>
+</body>
+</html>
