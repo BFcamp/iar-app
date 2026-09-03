@@ -1,88 +1,19 @@
-#!/usr/bin/env node
-// Triage de las preguntas marcadas `revisar`. SOLO diagnóstico: no repara
-// nada, no toca index.html ni la base.
-//
-//   node scripts/triage-revisar.mjs [--detalle] [--tipo caso_ajeno]
-//
-// Cruza tres cosas:
-//   1. el banco de index.html, que es lo que hoy ve el alumno
-//   2. fuentes/pack_preguntas.json, la extracción cruda del PDF
-//   3. fuentes/pack_preguntas_texto.md, la misma extracción en prosa
-// y clasifica cada pregunta por el defecto que la dejó marcada, con la
-// evidencia concreta que disparó esa clasificación.
+import {
+  RAIZ, PACK_JSON, PACK_MD, IMG_MD, leer, leerBanco,
+  BANDERAS, esDudosa, limpio, recorte, BOILER, BOILER_G,
+  solape, bloquesImagen,
+} from "./lib/fuentes.mjs";
 
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
-import { runInNewContext } from "node:vm";
-
-const RAIZ = join(dirname(fileURLToPath(import.meta.url)), "..");
 const DETALLE = process.argv.includes("--detalle");
 const SOLO = (() => {
   const k = process.argv.indexOf("--tipo");
   return k >= 0 ? process.argv[k + 1] : null;
 })();
 
-// ── fuentes ──
-const PACK_JSON = "fuentes/pack_preguntas.json";
-const PACK_MD = "fuentes/pack_preguntas_texto.md";
-const IMG_MD = "fuentes/transcripcion_PACK_CHOICE_imagenes.md";
-
-const html = readFileSync(join(RAIZ, "index.html"), "utf8");
-const pack = JSON.parse(readFileSync(join(RAIZ, PACK_JSON), "utf8"));
-const md = readFileSync(join(RAIZ, PACK_MD), "utf8");
-const img = readFileSync(join(RAIZ, IMG_MD), "utf8");
+const pack = JSON.parse(leer(PACK_JSON));
+const md = leer(PACK_MD);
 const mdLineas = md.split("\n");
-const imgLineas = img.split("\n");
-
-// La transcripción de las páginas-imagen viene en bloques "### Pregunta N".
-const bloquesImg = (() => {
-  const out = [];
-  let actual = null;
-  imgLineas.forEach((l, k) => {
-    if (l.startsWith("### ")) {
-      actual = { titulo: l.slice(4).trim(), linea: k + 1, cuerpo: [], opciones: [] };
-      out.push(actual);
-    } else if (actual) {
-      actual.cuerpo.push(l);
-      const m = l.match(/^([a-o])\.\s+(.*)$/);
-      if (m) actual.opciones.push(m[2].trim());
-    }
-  });
-  return out.filter((b) => b.opciones.length);
-})();
-
-// Solapamiento entre dos listas de opciones: 1 = mismo juego de opciones.
-const tokens = (t) => new Set((t || "")
-  .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-  .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean));
-function solape(a, b) {
-  if (!a.length || !b.length) return 0;
-  const A = a.map(tokens), B = b.map(tokens);
-  let suma = 0;
-  for (const x of A) {
-    if (!x.size) continue;
-    let mejor = 0;
-    for (const y of B) {
-      const inter = [...x].filter((t) => y.has(t)).length;
-      const union = new Set([...x, ...y]).size;
-      mejor = Math.max(mejor, union ? inter / union : 0);
-    }
-    suma += mejor;
-  }
-  return suma / A.length;
-}
-
-function leerBanco() {
-  const A = "const BANCO = [", Z = "BANCO5.forEach(q => BANCO.push(q));";
-  const ambito = {};
-  runInNewContext(html.slice(html.indexOf(A), html.indexOf(Z) + Z.length) + "\n;__b = BANCO;",
-    ambito, { timeout: 10000 });
-  return ambito.__b;
-}
-
-const BANDERAS = ["respuesta_ia_no_verificada", "caso_reconstruido",
-  "respuesta_pendiente", "respuesta_correcta_no_disponible_en_el_pack"];
+const bloquesImg = bloquesImagen(leer(IMG_MD));
 
 const banco = leerBanco();
 const marcadas = banco.filter((q) => BANDERAS.some((f) => q[f]));
@@ -92,8 +23,6 @@ pack.forEach((p) => (porPagina[p.pagina] = porPagina[p.pagina] || []).push(p));
 const ordenPack = Object.fromEntries(pack.map((p, k) => [p.id, k]));
 
 // ── heurísticas ──
-// Boilerplate del aula virtual que se coló al extraer la capa de texto.
-const BOILER = /sin responder a[úu]n|punt[úu]a como|marcar pregunta|enunciado de la pregunta|finalizar revisi[óo]n|comenzado el|se puntu[óa]/gi;
 // Una opción que termina en conectivo quedó cortada a mitad de frase.
 const CORTADA = /\b(y|o|de|del|la|el|los|las|en|con|que|por|para|un|una|se|su|al|sobre|entre|como|si|no)\s*$/i;
 // "Fulana de 34 años", "Un varón de 6 meses": marca de que hay una viñeta.
@@ -101,8 +30,6 @@ const VINETA = /\b(de|tiene)\s+\d{1,3}\s*(años|meses|días|semanas)\b/i;
 // El enunciado cuelga de un paciente que tiene que estar en otro lado.
 const COLGADO = /\b(la|el)\s+paciente\b|\besta\s+paciente\b|\bdel?\s+caso\b|\bde\s+acuerdo\s+a\s+su\s+respuesta\s+anterior\b|\bcuadro\s+cl[íi]nico\s+descripto\b|\blos\s+datos\s+expuestos\b|\bdiagnosticado\s+el\b|\beste\s+paciente\b/i;
 
-const limpio = (t) => (t || "").replace(/\s+/g, " ").trim();
-const recorte = (t, n) => (limpio(t).length > n ? limpio(t).slice(0, n) + "…" : limpio(t));
 
 function lineaMd(id) {
   const k = mdLineas.findIndex((l) => l.startsWith("## " + id + " "));
@@ -228,10 +155,9 @@ function buscarConsigna(p) {
   for (const q of pack) {
     if (q.id === p.id) continue;
     const sc = solape(mias, q.opciones.map((o) => o.texto));
-    if (sc >= 0.8 && limpio(q.enunciado.replace(BOILER, " ")).length > 40) {
+    if (sc >= 0.8 && limpio(q.enunciado.replace(BOILER_G, " ")).length > 40) {
       if (!mejor || sc > mejor.sc) mejor = { q, sc };
     }
-    BOILER.lastIndex = 0;
   }
   if (mejor) {
     pruebas.push("gemela exacta en el pack: " + mejor.q.id + " (p. " + mejor.q.pagina
@@ -277,10 +203,8 @@ function buscarGemelaSimple(p) {
   for (const q of pack) {
     if (q.id === p.id) continue;
     if (solape(mias, q.opciones.map((o) => o.texto)) >= 0.8) {
-      BOILER.lastIndex = 0;
-      if (limpio(q.enunciado.replace(BOILER, " ")).length > 40) return q;
+      if (limpio(q.enunciado.replace(BOILER_G, " ")).length > 40) return q;
     }
-    BOILER.lastIndex = 0;
   }
   return null;
 }
@@ -305,11 +229,9 @@ function clasificar(q) {
   const ubic = PACK_MD + ":" + lineaMd(p.id) + " · " + PACK_JSON + " (" + p.id + ", p. " + p.pagina + ")";
 
   // El orden es la prioridad: gana el defecto que hay que arreglar primero.
-  BOILER.lastIndex = 0;
   if (BOILER.test(enun)) {
-    BOILER.lastIndex = 0;
     tipo = "contaminada";
-    const resto = limpio(enun.replace(BOILER, " "));
+    const resto = limpio(enun.replace(BOILER_G, " "));
     pruebas.push('el enunciado arranca con boilerplate del aula: "' + recorte(enun, 70) + '"');
     if (resto.length < 25) {
       pruebas.push("sacado el boilerplate no queda consigna (quedan " + resto.length
