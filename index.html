@@ -61,6 +61,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 .tick{flex:1;background:#D3DAE0;border-radius:1px;transition:background .25s}
 .tick.ok{background:var(--ok)}
 .tick.no{background:var(--pen)}
+.tick.done{background:var(--ink3)}
 .tick.now{background:var(--ink)}
 
 /* ── pestañas ── */
@@ -323,6 +324,7 @@ h1{
 }
 .tagpill.hi{background:var(--hl);color:#5C4A00}
 .tagpill.rec{background:#E3DCEF;color:#4C3A73}
+.tagpill.exam{background:#DCEFEA;color:#0E6C54}
 .origen-nota{
   font-size:12.5px;color:var(--ink3);line-height:1.5;
   border-left:2px solid var(--line);padding-left:11px;margin:0 0 13px;
@@ -679,12 +681,34 @@ body.nt-editando .nt-hoja .nt-cuerpo{min-height:220px;}
       <div class="chips" id="f-area"></div>
     </div>
     <div class="group">
+      <p class="eyebrow">Filtrar por síndrome</p>
+      <div class="chips" id="f-sind"></div>
+    </div>
+    <div class="group">
       <p class="eyebrow">Filtrar por tipo de decisión</p>
       <div class="chips" id="f-tipo"></div>
     </div>
     <div class="group">
       <p class="eyebrow">Modo</p>
       <div class="chips" id="f-modo"></div>
+    </div>
+    <div class="group">
+      <p class="eyebrow">Cantidad</p>
+      <div class="chips" id="f-cantidad"></div>
+    </div>
+    <div class="group">
+      <p class="eyebrow">Orden</p>
+      <div class="chips" id="f-orden"></div>
+    </div>
+    <div class="group">
+      <p class="eyebrow">Estilo</p>
+      <div class="chips" id="f-estilo"></div>
+      <p class="ayuda" id="estilo-ayuda"></p>
+    </div>
+    <div class="group">
+      <p class="eyebrow">Confianza de la respuesta</p>
+      <div class="chips" id="f-confianza"></div>
+      <p class="ayuda" id="confianza-ayuda"></p>
     </div>
 
     <button class="start" id="btn-start">Empezar</button>
@@ -717,11 +741,12 @@ body.nt-editando .nt-hoja .nt-cuerpo{min-height:220px;}
 
   <!-- CIERRE -->
   <section class="screen" id="s-end">
-    <p class="eyebrow">Resultado de la sesión</p>
+    <p class="eyebrow" id="eyebrow-end">Resultado de la sesión</p>
     <p class="score" id="e-score"></p>
     <p class="lede" id="e-msg"></p>
     <div class="bars" id="e-bars"></div>
     <div class="divider"></div>
+    <button class="start" id="btn-review">Revisar todas con corrección</button>
     <button class="start" id="btn-wrong">Repasar solo las que fallé</button>
     <button class="ghost" id="btn-again">Volver al inicio</button>
   </section>
@@ -6281,13 +6306,41 @@ BANCO.forEach(q => {
 
 /* ═══ estado ═══ */
 const LETRAS = "abcdefghij";
-let stats = {};                 // {id:{seen,ok,flag}}
-const filtro = { examen:new Set(), area:new Set(), tipo:new Set(), modo:"todas" };
+let stats = {};                 // {id:{seen,ok,flag,ultimaVista}}
+const filtro = {
+  examen:new Set(), area:new Set(), tipo:new Set(), sind:new Set(), modo:"todas",
+  cantidad:null,      // null = todas · 10/20/30 = tope de preguntas
+  orden:"azar",        // "azar" | "original"
+  estilo:"practica",   // "practica" (corrige al toque) | "examen" (corrige al final)
+  confianza:"excluir"  // "excluir" | "todas" | "solo" — respuestas de menor confianza (IA sin verificar)
+};
 let mazo = [], i = 0, sel = new Set(), respondida = false, notaTimer = null;
+let modoExamenActivo = false;
 const sesion = [];              // [{id,area,tipo,acierto}]
 
 const $ = s => document.querySelector(s);
 const uniq = k => [...new Set(BANCO.map(q => q[k]))];
+// una pregunta es "dudosa" cuando su respuesta viene de una reconstrucción/inferencia de IA
+// sin verificar contra la fuente, o directamente no tiene respuesta correcta asignada todavía.
+const esDudosa = q => !!(q.respuesta_ia_no_verificada || q.caso_reconstruido
+  || q.respuesta_pendiente || q.respuesta_correcta_no_disponible_en_el_pack);
+// mapa pregunta → síndromes que la usan como evidencia (viene de REGLAS, se arma una sola vez)
+let _sindPorPregunta = null;
+function sindDePregunta(id){
+  if(!_sindPorPregunta){
+    _sindPorPregunta = {};
+    REGLAS.forEach(r => {
+      const eff = reglaEfectiva(r);
+      r.qs.forEach(qid => (_sindPorPregunta[qid] = _sindPorPregunta[qid] || new Set()).add(eff.sind));
+    });
+  }
+  return _sindPorPregunta[id] || new Set();
+}
+function uniqSind(){
+  const set = new Set();
+  REGLAS.forEach(r => set.add(reglaEfectiva(r).sind));
+  return [...set];
+}
 
 /* ═══ Supabase (sincronización en la nube) ═══
    Si hay sesión iniciada, el progreso/notas/espacio se leen y escriben ahí.
@@ -6750,11 +6803,22 @@ function pintarChips(){
   };
   box('#f-examen','examen'); box('#f-area','area'); box('#f-tipo','tipo');
 
+  const sindEl = $('#f-sind'); sindEl.innerHTML = '';
+  uniqSind().forEach(v => {
+    const n = BANCO.filter(q => sindDePregunta(q.id).has(v)).length;
+    sindEl.appendChild(chip(v, n, filtro.sind.has(v), () => {
+      filtro.sind.has(v) ? filtro.sind.delete(v) : filtro.sind.add(v);
+    }));
+  });
+
   const m = $('#f-modo'); m.innerHTML = '';
+  const areaMasFloja = areaSugerida();
   const modos = [
     ['todas','Todas'],
+    ['sugerido', areaMasFloja ? 'Sugerido (' + areaMasFloja + ')' : 'Sugerido'],
     ['alto','Alto rendimiento'],
     ['falladas','Las que fallé'],
+    ['espaciado','Hace tiempo que no las veo'],
     ['marcadas','Marcadas'],
     ['nuevas','Sin responder'],
     ['textual','Solo textuales']
@@ -6765,15 +6829,72 @@ function pintarChips(){
     m.appendChild(c);
   });
 
-  const n = seleccion().length;
+  const cEl = $('#f-cantidad'); cEl.innerHTML = '';
+  [[null,'Todas'],[10,'10'],[20,'20'],[30,'30']].forEach(([k,lb]) => {
+    cEl.appendChild(chip(lb, null, filtro.cantidad === k, () => filtro.cantidad = k));
+  });
+
+  const oEl = $('#f-orden'); oEl.innerHTML = '';
+  [['azar','Al azar'],['original','Original']].forEach(([k,lb]) => {
+    oEl.appendChild(chip(lb, null, filtro.orden === k, () => filtro.orden = k));
+  });
+
+  const eEl = $('#f-estilo'); eEl.innerHTML = '';
+  [['practica','Práctica'],['examen','Examen']].forEach(([k,lb]) => {
+    eEl.appendChild(chip(lb, null, filtro.estilo === k, () => { filtro.estilo = k; pintarAyudas(); }));
+  });
+
+  const fEl = $('#f-confianza'); fEl.innerHTML = '';
+  [['excluir','Excluir dudosas'],['todas','Incluir todas'],['solo','Solo dudosas']].forEach(([k,lb]) => {
+    const disp = k === 'solo' ? BANCO.filter(esDudosa).length : null;
+    const c = chip(lb, disp, filtro.confianza === k, () => { filtro.confianza = k; pintarAyudas(); });
+    if(k === 'solo' && !BANCO.filter(esDudosa).length) c.disabled = true;
+    fEl.appendChild(c);
+  });
+  pintarAyudas();
+
+  const total = seleccion().length;
+  const n = filtro.cantidad ? Math.min(total, filtro.cantidad) : total;
   $('#btn-start').disabled = !n;
   $('#btn-start').textContent = n ? 'Empezar · ' + n + (n===1?' pregunta':' preguntas') : 'Sin preguntas con esos filtros';
+}
+function pintarAyudas(){
+  $('#estilo-ayuda').textContent = filtro.estilo === 'examen'
+    ? 'No corrige pregunta por pregunta: recién ves qué acertaste al terminar, como un examen real.'
+    : 'Corrige cada pregunta al toque, con la explicación completa.';
+  $('#confianza-ayuda').textContent = filtro.confianza === 'excluir'
+    ? 'Deja afuera las preguntas cuya respuesta fue reconstruida por IA y no está verificada contra la fuente original.'
+    : filtro.confianza === 'solo'
+      ? 'Practicá solo esas preguntas, para revisarlas vos y confirmarlas.'
+      : 'Incluye también las preguntas con respuesta reconstruida por IA (marcadas como tal al corregir).';
+}
+function areaSugerida(){
+  const porArea = {};
+  BANCO.forEach(q => {
+    const s = stats[q.id];
+    if(!s || !s.seen) return;
+    porArea[q.area] = porArea[q.area] || {n:0, ok:0};
+    porArea[q.area].n += s.seen; porArea[q.area].ok += s.ok;
+  });
+  const candidatas = Object.entries(porArea).filter(([,v]) => v.n >= 3);
+  if(!candidatas.length) return null;
+  candidatas.sort((a,b) => (a[1].ok/a[1].n) - (b[1].ok/b[1].n));
+  return candidatas[0][0];
 }
 function disponibles(modo){
   return BANCO.filter(q => {
     const s = stats[q.id];
+    if(modo === 'sugerido'){
+      const peor = areaSugerida();
+      return peor && q.area === peor;
+    }
     if(modo === 'alto')     return q.alto;
     if(modo === 'falladas') return s && s.seen > s.ok;
+    if(modo === 'espaciado'){
+      const LIMITE_MS = 10 * 24 * 60 * 60 * 1000; // 10 días sin verla
+      if(!s || !s.seen) return false;
+      return !s.ultimaVista || (Date.now() - new Date(s.ultimaVista).getTime()) > LIMITE_MS;
+    }
     if(modo === 'marcadas') return s && s.flag;
     if(modo === 'nuevas')   return !s;
     if(modo === 'textual')  return q.origen === 'textual';
@@ -6784,8 +6905,16 @@ function seleccion(){
   return disponibles(filtro.modo).filter(q =>
     (!filtro.examen.size || filtro.examen.has(q.examen)) &&
     (!filtro.area.size   || filtro.area.has(q.area)) &&
-    (!filtro.tipo.size   || filtro.tipo.has(q.tipo))
+    (!filtro.tipo.size   || filtro.tipo.has(q.tipo)) &&
+    (!filtro.sind.size   || [...filtro.sind].some(v => sindDePregunta(q.id).has(v))) &&
+    (filtro.confianza === 'todas' || (filtro.confianza === 'solo' ? esDudosa(q) : !esDudosa(q)))
   );
+}
+function armarMazo(){
+  let lista = seleccion();
+  if(filtro.orden === 'azar') lista = lista.slice().sort(() => Math.random() - .5);
+  if(filtro.cantidad) lista = lista.slice(0, filtro.cantidad);
+  return lista;
 }
 
 /* ═══ navegación ═══ */
@@ -6794,8 +6923,10 @@ function ir(id){
   $(id).classList.add('on');
   window.scrollTo({top:0});
 }
-function arrancar(lista){
-  mazo = lista.slice().sort(() => Math.random() - .5);
+function arrancar(lista, opts){
+  opts = opts || {};
+  modoExamenActivo = !!opts.examen;
+  mazo = opts.yaOrdenado ? lista.slice() : lista.slice().sort(() => Math.random() - .5);
   i = 0; sesion.length = 0;
   pintarStrip(); mostrar(); ir('#s-q');
 }
@@ -6805,7 +6936,7 @@ function pintarStrip(){
     const t = document.createElement('span');
     t.className = 'tick';
     const r = sesion[k];
-    if(r) t.classList.add(r.acierto ? 'ok' : 'no');
+    if(r) t.classList.add(modoExamenActivo ? 'done' : (r.acierto ? 'ok' : 'no'));
     else if(k === i) t.classList.add('now');
     s.appendChild(t);
   });
@@ -6831,11 +6962,15 @@ function mostrar(){
                  '<span class="tagpill">'+q.tipo+'</span>'];
   if(q.alto) pills.push('<span class="tagpill hi">Se repite</span>');
   if(q.origen === 'reconstruida') pills.push('<span class="tagpill rec">Reconstruida</span>');
+  if(esDudosa(q)) pills.push('<span class="tagpill rec">Respuesta sin verificar</span>');
+  if(modoExamenActivo) pills.push('<span class="tagpill exam">Examen</span>');
   $('#q-meta').innerHTML = pills.join('');
 
   $('#q-caso').innerHTML = fmt(q.caso);
   $('#q-prompt').textContent = q.pregunta;
-  $('#q-hint').textContent = (q.n > 1 ? 'Marcá ' + q.n + ' opciones.' : 'Una sola opción.') + ' Podés responder con los números del teclado.';
+  $('#q-hint').textContent = modoExamenActivo
+    ? 'No se corrige hasta el final. ' + (q.n > 1 ? 'Marcá ' + q.n + ' opciones.' : 'Una sola opción.')
+    : (q.n > 1 ? 'Marcá ' + q.n + ' opciones.' : 'Una sola opción.') + ' Podés responder con los números del teclado.';
 
   const box = $('#q-opts'); box.innerHTML = '';
   q.opciones.forEach((o, k) => {
@@ -6864,12 +6999,30 @@ function elegir(k, btn){
   $('#btn-confirm').disabled = sel.size === 0;
 }
 
+/* ═══ registro de progreso (usado en modo práctica y en modo examen) ═══ */
+function registrarRespuesta(q, acierto){
+  const s = stats[q.id] = stats[q.id] || {seen:0, ok:0, flag:false};
+  s.seen++; if(acierto) s.ok++;
+  s.ultimaVista = new Date().toISOString();
+  guardar();
+  sesion[i] = {id:q.id, area:q.area, tipo:q.tipo, acierto};
+  pintarStrip();
+}
+
 /* ═══ corrección + tarjeta ═══ */
 function resolver(){
   respondida = true;
   const q = mazo[i];
   const correctas = q.opciones.map((o,k) => o.ok ? k : -1).filter(k => k >= 0);
   const acierto = sel.size === correctas.length && correctas.every(k => sel.has(k));
+
+  if(modoExamenActivo){
+    // en modo examen no se corrige pregunta por pregunta: se registra y se pasa
+    // directo a la siguiente, la corrección completa aparece recién al cerrar la sesión.
+    registrarRespuesta(q, acierto);
+    avanzar();
+    return;
+  }
 
   document.querySelectorAll('#q-opts .opt').forEach((b, k) => {
     b.disabled = true;
@@ -6952,12 +7105,7 @@ function resolver(){
     notaTimer = setTimeout(() => guardarNota(q.id, s.nota), 2000);
   };
 
-  // registro
-  const s = stats[q.id] = stats[q.id] || {seen:0, ok:0, flag:false};
-  s.seen++; if(acierto) s.ok++;
-  guardar();
-  sesion[i] = {id:q.id, area:q.area, tipo:q.tipo, acierto};
-  pintarStrip();
+  registrarRespuesta(q, acierto);
   centrarEnCorrectas();
 }
 
@@ -6992,9 +7140,12 @@ function avanzar(){
 
 /* ═══ cierre ═══ */
 function cerrar(){
+  const fueExamen = modoExamenActivo;
+  const mazoSesion = mazo.slice();
   const ok = sesion.filter(r => r.acierto).length;
   const pct = Math.round(ok / sesion.length * 100);
   $('#e-score').innerHTML = ok + '<small> / ' + sesion.length + '</small>';
+  $('#eyebrow-end').textContent = fueExamen ? 'Resultado del examen' : 'Resultado de la sesión';
   $('#e-msg').textContent = pct >= 80
     ? 'Buen dominio del set. Conviene pasar a las áreas con menos preguntas hechas.'
     : pct >= 60
@@ -7017,6 +7168,14 @@ function cerrar(){
   $('#btn-wrong').textContent = 'Repasar las ' + falladas.length + ' que fallé';
   $('#btn-wrong').onclick = () => arrancar(
     BANCO.filter(q => falladas.some(f => f.id === q.id)));
+
+  // "revisar todas" reproduce el mismo mazo, en el mismo orden, pero siempre en
+  // modo práctica (con corrección) — clave después de un examen, donde no se vio
+  // ninguna corrección todavía.
+  $('#btn-review').hidden = false;
+  $('#btn-review').textContent = fueExamen ? 'Revisar todas con corrección' : 'Volver a ver las explicaciones';
+  $('#btn-review').onclick = () => arrancar(mazoSesion, {yaOrdenado:true});
+
   ir('#s-end');
 }
 
@@ -8142,7 +8301,8 @@ function aplicarPreferenciasNotas(){
 }
 
 /* ═══ init ═══ */
-$('#btn-start').onclick = () => arrancar(seleccion());
+$('#btn-start').onclick = () =>
+  arrancar(armarMazo(), {examen: filtro.estilo === 'examen', yaOrdenado: true});
 $('#btn-confirm').onclick = resolver;
 
 /* ═══ atajos de teclado: 1‑9 elige la opción, Enter confirma o avanza ═══ */
