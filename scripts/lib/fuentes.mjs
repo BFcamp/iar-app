@@ -41,7 +41,9 @@ export const recorte = (t, n) => (limpio(t).length > n ? limpio(t).slice(0, n) +
 
 // Boilerplate del aula virtual que se coló al extraer la capa de texto.
 // Sin /g: los llamadores hacen .test() y un lastIndex vivo daría falsos negativos.
-export const BOILER = /sin responder a[úu]n|punt[úu]a como|marcar pregunta|enunciado de la pregunta|finalizar revisi[óo]n|comenzado el|se puntu[óa]/i;
+// \s+ y no un espacio literal: el PDF parte estas frases con saltos de línea
+// ("Seleccione \nuna:"), y con espacio fijo el patrón no las agarra.
+export const BOILER = /sin\s+responder\s+a[úu]n|punt[úu]a\s+como|marcar\s+pregunta|enunciado\s+de\s+la\s+pregunta|finalizar\s+revisi[óo]n|comenzado\s+el|se\s+puntu[óa]/i;
 export const BOILER_G = new RegExp(BOILER.source, "gi");
 
 export const LETRAS = "abcdefghij";

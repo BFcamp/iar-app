@@ -43,7 +43,7 @@ const LIGADURAS = [["ﬁ", "fi"], ["ﬂ", "fl"], ["ﬀ", "ff"],
 // ni por accidente. La invariante compara contra esto, no contra el texto
 // crudo: si la limpieza se lleva puesta una cifra de afuera, se rechaza.
 const CIFRAS_DE_BOILERPLATE =
-  /punt[úu]a como\s*\d+(?:[.,]\d+)?|pregunta\s+(?:nro\.?\s*)?\d+(?:\s+de\s+\d+)?|^[ \t]*\d+[ \t]*$/gim;
+  /punt[úu]a\s+como\s*\d+(?:[.,]\d+)?|pregunta\s+(?:nro\.?\s*)?\d+(?:\s+de\s+\d+)?|^[ \t]*\d+[ \t]*$/gim;
 
 const REGLAS_AUTO = [
   {
@@ -51,11 +51,11 @@ const REGLAS_AUTO = [
     permite: CIFRAS_DE_BOILERPLATE,
     aplica: (t) => t
       // el puntaje se consume junto con su frase, no como número suelto
-      .replace(/punt[úu]a como\s*\d+(?:[.,]\d+)?/gi, " ")
+      .replace(/punt[úu]a\s+como\s*\d+(?:[.,]\d+)?/gi, " ")
       .replace(/^[ \t]*Pregunta\s+(?:Nro\.?\s*)?\d+(?:\s+de\s+\d+)?[ \t]*/gim, "")
       .replace(BOILER_G, " ")
-      .replace(/Seleccione una o más de una:?/gi, " ")
-      .replace(/Seleccione una:?/gi, " ")
+      .replace(/Seleccione\s+una\s+o\s+más\s+de\s+una\s*:?/gi, " ")
+      .replace(/Seleccione\s+una\s*:?/gi, " ")
       .replace(/^[ \t]*\d+[ \t]*$/gm, ""),
   },
   { nombre: "ligaduras", aplica: (t) => LIGADURAS.reduce((s, [a, b]) => s.split(a).join(b), t) },

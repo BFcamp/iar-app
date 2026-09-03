@@ -243,6 +243,9 @@ mismas cifras, mismas opciones, ninguna respuesta marcada, ninguna palabra nueva
 
 ### `pc-034`
 
+- **caso** · regla `boilerplate`
+  - antes: `Beatriz de 54 años de edad consulta por episodios de prurito de un año de evolución. El examen físico es normal salvo lesiones por rascado. Los exámenes de rutina son nor…`
+  - después: `Beatriz de 54 años de edad consulta por episodios de prurito de un año de evolución. El examen físico es normal salvo lesiones por rascado. Los exámenes de rutina son nor…`
 - **caso** · regla `espacios`
   - antes: `Beatriz de 54 años de edad consulta por episodios de prurito de un año de evolución. El examen físico es normal salvo lesiones por rascado. Los exámenes de rutina son nor…`
   - después: `Beatriz de 54 años de edad consulta por episodios de prurito de un año de evolución. El examen físico es normal salvo lesiones por rascado. Los exámenes de rutina son nor…`
@@ -266,10 +269,10 @@ mismas cifras, mismas opciones, ninguna respuesta marcada, ninguna palabra nueva
 
 - **pregunta** · regla `boilerplate`
   - antes: `Sin responder aún Puntúa como 1,00 Marcar pregunta Enunciado de la pregunta Sergio de 56 años, consulta por ptosis palpebral derecha de cuatro días de evolución. Al exame…`
-  - después: `Enunciado de la pregunta Sergio de 56 años, consulta por ptosis palpebral derecha de cuatro días de evolución. Al examen ocular, el ojo se encuentra desviado hacia afuera…`
+  - después: `Sergio de 56 años, consulta por ptosis palpebral derecha de cuatro días de evolución. Al examen ocular, el ojo se encuentra desviado hacia afuera y el reflejo fotomotor y…`
 - **pregunta** · regla `espacios`
-  - antes: `Enunciado de la pregunta Sergio de 56 años, consulta por ptosis palpebral derecha de cuatro días de evolución. Al examen ocular, el ojo se encuentra desviado hacia afuera…`
-  - después: `Enunciado de la pregunta Sergio de 56 años, consulta por ptosis palpebral derecha de cuatro días de evolución. Al examen ocular, el ojo se encuentra desviado hacia afuera…`
+  - antes: `Sergio de 56 años, consulta por ptosis palpebral derecha de cuatro días de evolución. Al examen ocular, el ojo se encuentra desviado hacia afuera y el reflejo fotomotor y…`
+  - después: `Sergio de 56 años, consulta por ptosis palpebral derecha de cuatro días de evolución. Al examen ocular, el ojo se encuentra desviado hacia afuera y el reflejo fotomotor y…`
 
 ### `pc-037`
 
@@ -284,28 +287,28 @@ mismas cifras, mismas opciones, ninguna respuesta marcada, ninguna palabra nueva
 
 - **pregunta** · regla `boilerplate`
   - antes: `Sin responder aún Puntúa como 1,00 Marcar pregunta Enunciado de la pregunta Lina de 18 años ingresa por un cuadro e purpuras palpables en miembros inferiores y región glú…`
-  - después: `Enunciado de la pregunta Lina de 18 años ingresa por un cuadro e purpuras palpables en miembros inferiores y región glútea. Refiere artralgias en rodillas y tobillos y do…`
+  - después: `Lina de 18 años ingresa por un cuadro e purpuras palpables en miembros inferiores y región glútea. Refiere artralgias en rodillas y tobillos y dolor abdominal. Una rutina…`
 - **pregunta** · regla `espacios`
-  - antes: `Enunciado de la pregunta Lina de 18 años ingresa por un cuadro e purpuras palpables en miembros inferiores y región glútea. Refiere artralgias en rodillas y tobillos y do…`
-  - después: `Enunciado de la pregunta Lina de 18 años ingresa por un cuadro e purpuras palpables en miembros inferiores y región glútea. Refiere artralgias en rodillas y tobillos y do…`
+  - antes: `Lina de 18 años ingresa por un cuadro e purpuras palpables en miembros inferiores y región glútea. Refiere artralgias en rodillas y tobillos y dolor abdominal. Una rutina…`
+  - después: `Lina de 18 años ingresa por un cuadro e purpuras palpables en miembros inferiores y región glútea. Refiere artralgias en rodillas y tobillos y dolor abdominal. Una rutina…`
 
 ### `pc-039`
 
 - **pregunta** · regla `boilerplate`
   - antes: `Sin responder aún Puntúa como 1,00 Marcar pregunta Enunciado de la pregunta Usted hablará con la familia respecto del pronóstico de Lina y les explicará que: Seleccione u…`
-  - después: `Usted hablará con la familia respecto del pronóstico de Lina y les explicará que: Seleccione una:`
+  - después: `Usted hablará con la familia respecto del pronóstico de Lina y les explicará que:`
 - **pregunta** · regla `espacios`
-  - antes: `Usted hablará con la familia respecto del pronóstico de Lina y les explicará que: Seleccione una:`
-  - después: `Usted hablará con la familia respecto del pronóstico de Lina y les explicará que: Seleccione una:`
+  - antes: `Usted hablará con la familia respecto del pronóstico de Lina y les explicará que:`
+  - después: `Usted hablará con la familia respecto del pronóstico de Lina y les explicará que:`
 
 ### `pc-040`
 
 - **pregunta** · regla `boilerplate`
   - antes: `Sin responder aún Puntúa como 1,00 Marcar pregunta Enunciado de la pregunta Francisco, de 3 años de edad, concurre a la consulta por lesión en placa inflamatoria en cuero…`
-  - después: `Enunciado de la pregunta Francisco, de 3 años de edad, concurre a la consulta por lesión en placa inflamatoria en cuero cabelludo de 1 ½ mes de evolución. En la placa se …`
+  - después: `Francisco, de 3 años de edad, concurre a la consulta por lesión en placa inflamatoria en cuero cabelludo de 1 ½ mes de evolución. En la placa se observa ausencia de cabel…`
 - **pregunta** · regla `espacios`
-  - antes: `Enunciado de la pregunta Francisco, de 3 años de edad, concurre a la consulta por lesión en placa inflamatoria en cuero cabelludo de 1 ½ mes de evolución. En la placa se …`
-  - después: `Enunciado de la pregunta Francisco, de 3 años de edad, concurre a la consulta por lesión en placa inflamatoria en cuero cabelludo de 1 ½ mes de evolución. En la placa se …`
+  - antes: `Francisco, de 3 años de edad, concurre a la consulta por lesión en placa inflamatoria en cuero cabelludo de 1 ½ mes de evolución. En la placa se observa ausencia de cabel…`
+  - después: `Francisco, de 3 años de edad, concurre a la consulta por lesión en placa inflamatoria en cuero cabelludo de 1 ½ mes de evolución. En la placa se observa ausencia de cabel…`
 
 ### `pc-041`
 
@@ -320,46 +323,46 @@ mismas cifras, mismas opciones, ninguna respuesta marcada, ninguna palabra nueva
 
 - **pregunta** · regla `boilerplate`
   - antes: `Sin responder aún Puntúa como 1,00 Marcar pregunta Enunciado de la pregunta Tomas, de 2 años, concurre con su mamá a la guardia del hospital por presentar dificultad para…`
-  - después: `Enunciado de la pregunta Tomas, de 2 años, concurre con su mamá a la guardia del hospital por presentar dificultad para respirar. Ella acababa de regresar de hacer las co…`
+  - después: `Tomas, de 2 años, concurre con su mamá a la guardia del hospital por presentar dificultad para respirar. Ella acababa de regresar de hacer las compras y la persona que lo…`
 - **pregunta** · regla `espacios`
-  - antes: `Enunciado de la pregunta Tomas, de 2 años, concurre con su mamá a la guardia del hospital por presentar dificultad para respirar. Ella acababa de regresar de hacer las co…`
-  - después: `Enunciado de la pregunta Tomas, de 2 años, concurre con su mamá a la guardia del hospital por presentar dificultad para respirar. Ella acababa de regresar de hacer las co…`
+  - antes: `Tomas, de 2 años, concurre con su mamá a la guardia del hospital por presentar dificultad para respirar. Ella acababa de regresar de hacer las compras y la persona que lo…`
+  - después: `Tomas, de 2 años, concurre con su mamá a la guardia del hospital por presentar dificultad para respirar. Ella acababa de regresar de hacer las compras y la persona que lo…`
 
 ### `pc-043`
 
 - **pregunta** · regla `boilerplate`
   - antes: `Sin responder aún Puntúa como 1,00 Marcar pregunta Enunciado de la pregunta Ante el cuadro clínico que presenta Tomás y los datos recabados ¿qué estudios complementarios …`
-  - después: `Enunciado de la pregunta Ante el cuadro clínico que presenta Tomás y los datos recabados ¿qué estudios complementarios solicitaría inicialmente? Marque 2 opciones`
+  - después: `Ante el cuadro clínico que presenta Tomás y los datos recabados ¿qué estudios complementarios solicitaría inicialmente? Marque 2 opciones`
 - **pregunta** · regla `espacios`
-  - antes: `Enunciado de la pregunta Ante el cuadro clínico que presenta Tomás y los datos recabados ¿qué estudios complementarios solicitaría inicialmente? Marque 2 opciones`
-  - después: `Enunciado de la pregunta Ante el cuadro clínico que presenta Tomás y los datos recabados ¿qué estudios complementarios solicitaría inicialmente? Marque 2 opciones`
+  - antes: `Ante el cuadro clínico que presenta Tomás y los datos recabados ¿qué estudios complementarios solicitaría inicialmente? Marque 2 opciones`
+  - después: `Ante el cuadro clínico que presenta Tomás y los datos recabados ¿qué estudios complementarios solicitaría inicialmente? Marque 2 opciones`
 
 ### `pc-044`
 
 - **pregunta** · regla `boilerplate`
   - antes: `Sin responder aún Puntúa como 1,00 Marcar pregunta Enunciado de la pregunta ¿Cuáles de las siguientes pautas madurativas corresponden a un niño de 3 años? Marque 2 opcion…`
-  - después: `Enunciado de la pregunta ¿Cuáles de las siguientes pautas madurativas corresponden a un niño de 3 años? Marque 2 opciones`
+  - después: `¿Cuáles de las siguientes pautas madurativas corresponden a un niño de 3 años? Marque 2 opciones`
 - **pregunta** · regla `espacios`
-  - antes: `Enunciado de la pregunta ¿Cuáles de las siguientes pautas madurativas corresponden a un niño de 3 años? Marque 2 opciones`
-  - después: `Enunciado de la pregunta ¿Cuáles de las siguientes pautas madurativas corresponden a un niño de 3 años? Marque 2 opciones`
+  - antes: `¿Cuáles de las siguientes pautas madurativas corresponden a un niño de 3 años? Marque 2 opciones`
+  - después: `¿Cuáles de las siguientes pautas madurativas corresponden a un niño de 3 años? Marque 2 opciones`
 
 ### `pc-045`
 
 - **pregunta** · regla `boilerplate`
   - antes: `Sin responder aún Puntúa como 1,00 Marcar pregunta Enunciado de la pregunta ¿Cuál es el mecanismo de acción de la metformina en el tratamiento de la diabetes del adulto?`
-  - después: `Enunciado de la pregunta ¿Cuál es el mecanismo de acción de la metformina en el tratamiento de la diabetes del adulto?`
+  - después: `¿Cuál es el mecanismo de acción de la metformina en el tratamiento de la diabetes del adulto?`
 - **pregunta** · regla `espacios`
-  - antes: `Enunciado de la pregunta ¿Cuál es el mecanismo de acción de la metformina en el tratamiento de la diabetes del adulto?`
-  - después: `Enunciado de la pregunta ¿Cuál es el mecanismo de acción de la metformina en el tratamiento de la diabetes del adulto?`
+  - antes: `¿Cuál es el mecanismo de acción de la metformina en el tratamiento de la diabetes del adulto?`
+  - después: `¿Cuál es el mecanismo de acción de la metformina en el tratamiento de la diabetes del adulto?`
 
 ### `pc-046`
 
 - **pregunta** · regla `boilerplate`
   - antes: `Sin responder aún Puntúa como 1,00 Marcar pregunta Enunciado de la pregunta Ramón de 48 años ingresa con dolor abdominal de 24 horas de evolución. La sospecha diagnóstica…`
-  - después: `Enunciado de la pregunta Ramón de 48 años ingresa con dolor abdominal de 24 horas de evolución. La sospecha diagnóstica es de pancreatitis aguda. No posee antecedentes de…`
+  - después: `Ramón de 48 años ingresa con dolor abdominal de 24 horas de evolución. La sospecha diagnóstica es de pancreatitis aguda. No posee antecedentes de alcoholismo y se descart…`
 - **pregunta** · regla `espacios`
-  - antes: `Enunciado de la pregunta Ramón de 48 años ingresa con dolor abdominal de 24 horas de evolución. La sospecha diagnóstica es de pancreatitis aguda. No posee antecedentes de…`
-  - después: `Enunciado de la pregunta Ramón de 48 años ingresa con dolor abdominal de 24 horas de evolución. La sospecha diagnóstica es de pancreatitis aguda. No posee antecedentes de…`
+  - antes: `Ramón de 48 años ingresa con dolor abdominal de 24 horas de evolución. La sospecha diagnóstica es de pancreatitis aguda. No posee antecedentes de alcoholismo y se descart…`
+  - después: `Ramón de 48 años ingresa con dolor abdominal de 24 horas de evolución. La sospecha diagnóstica es de pancreatitis aguda. No posee antecedentes de alcoholismo y se descart…`
 
 ### `pc-047`
 
@@ -368,28 +371,28 @@ mismas cifras, mismas opciones, ninguna respuesta marcada, ninguna palabra nueva
   - después: `Ramón de 48 años ingresa con dolor abdominal de 24 horas de evolución. La sospecha diagnóstica es de pancreatitis aguda. No posee antecedentes de alcoholismo y se descart…`
 - **pregunta** · regla `boilerplate`
   - antes: `Sin responder aún Puntúa como 1,00 Marcar pregunta Enunciado de la pregunta En este caso, ¿cuál es la causa más probable de la sospecha diagnóstica?`
-  - después: `Enunciado de la pregunta En este caso, ¿cuál es la causa más probable de la sospecha diagnóstica?`
+  - después: `En este caso, ¿cuál es la causa más probable de la sospecha diagnóstica?`
 - **pregunta** · regla `espacios`
-  - antes: `Enunciado de la pregunta En este caso, ¿cuál es la causa más probable de la sospecha diagnóstica?`
-  - después: `Enunciado de la pregunta En este caso, ¿cuál es la causa más probable de la sospecha diagnóstica?`
+  - antes: `En este caso, ¿cuál es la causa más probable de la sospecha diagnóstica?`
+  - después: `En este caso, ¿cuál es la causa más probable de la sospecha diagnóstica?`
 
 ### `pc-048`
 
 - **pregunta** · regla `boilerplate`
   - antes: `Sin responder aún Puntúa como 1,00 Marcar pregunta Enunciado de la pregunta Fernanda, de 26 años de edad, cursa un embarazo de 31 semanas. Se presenta a la consulta por h…`
-  - después: `Enunciado de la pregunta Fernanda, de 26 años de edad, cursa un embarazo de 31 semanas. Se presenta a la consulta por hemorragia vaginal roja brillante. El examen físico …`
+  - después: `Fernanda, de 26 años de edad, cursa un embarazo de 31 semanas. Se presenta a la consulta por hemorragia vaginal roja brillante. El examen físico es normal y posee anteced…`
 - **pregunta** · regla `espacios`
-  - antes: `Enunciado de la pregunta Fernanda, de 26 años de edad, cursa un embarazo de 31 semanas. Se presenta a la consulta por hemorragia vaginal roja brillante. El examen físico …`
-  - después: `Enunciado de la pregunta Fernanda, de 26 años de edad, cursa un embarazo de 31 semanas. Se presenta a la consulta por hemorragia vaginal roja brillante. El examen físico …`
+  - antes: `Fernanda, de 26 años de edad, cursa un embarazo de 31 semanas. Se presenta a la consulta por hemorragia vaginal roja brillante. El examen físico es normal y posee anteced…`
+  - después: `Fernanda, de 26 años de edad, cursa un embarazo de 31 semanas. Se presenta a la consulta por hemorragia vaginal roja brillante. El examen físico es normal y posee anteced…`
 
 ### `pc-049`
 
 - **pregunta** · regla `boilerplate`
   - antes: `Sin responder aún Puntúa como 1,00 Marcar pregunta Enunciado de la pregunta Manuel de 18 años de edad ingresa por un cuadro clínico compatible con faringitis aguda bacter…`
-  - después: `Enunciado de la pregunta Manuel de 18 años de edad ingresa por un cuadro clínico compatible con faringitis aguda bacteriana. No posee antecedentes de alergias medicamento…`
+  - después: `Manuel de 18 años de edad ingresa por un cuadro clínico compatible con faringitis aguda bacteriana. No posee antecedentes de alergias medicamentosas. ¿Cuál es la bacteria…`
 - **pregunta** · regla `espacios`
-  - antes: `Enunciado de la pregunta Manuel de 18 años de edad ingresa por un cuadro clínico compatible con faringitis aguda bacteriana. No posee antecedentes de alergias medicamento…`
-  - después: `Enunciado de la pregunta Manuel de 18 años de edad ingresa por un cuadro clínico compatible con faringitis aguda bacteriana. No posee antecedentes de alergias medicamento…`
+  - antes: `Manuel de 18 años de edad ingresa por un cuadro clínico compatible con faringitis aguda bacteriana. No posee antecedentes de alergias medicamentosas. ¿Cuál es la bacteria…`
+  - después: `Manuel de 18 años de edad ingresa por un cuadro clínico compatible con faringitis aguda bacteriana. No posee antecedentes de alergias medicamentosas. ¿Cuál es la bacteria…`
 
 ### `pc-050`
 
@@ -398,10 +401,10 @@ mismas cifras, mismas opciones, ninguna respuesta marcada, ninguna palabra nueva
   - después: `Manuel de 18 años de edad ingresa por un cuadro clínico compatible con faringitis aguda bacteriana. No posee antecedentes de alergias medicamentosas. ¿Cuál es la bacteria…`
 - **pregunta** · regla `boilerplate`
   - antes: `Sin responder aún Puntúa como 1,00 Marcar pregunta Enunciado de la pregunta En el caso de Manuel, ¿cuál tratamiento inicial más adecuado?`
-  - después: `Enunciado de la pregunta En el caso de Manuel, ¿cuál tratamiento inicial más adecuado?`
+  - después: `En el caso de Manuel, ¿cuál tratamiento inicial más adecuado?`
 - **pregunta** · regla `espacios`
-  - antes: `Enunciado de la pregunta En el caso de Manuel, ¿cuál tratamiento inicial más adecuado?`
-  - después: `Enunciado de la pregunta En el caso de Manuel, ¿cuál tratamiento inicial más adecuado?`
+  - antes: `En el caso de Manuel, ¿cuál tratamiento inicial más adecuado?`
+  - después: `En el caso de Manuel, ¿cuál tratamiento inicial más adecuado?`
 
 ### `pc-052`
 
