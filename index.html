@@ -307,6 +307,25 @@ h1{
 .chip .n{font-family:'IBM Plex Mono',monospace;font-size:11px;opacity:.6}
 .chip:disabled{opacity:.35}
 
+/* lista de síndromes: buscable, compacta, ordenada por cuántas preguntas tiene */
+.sindlist{
+  max-height:290px;overflow-y:auto;
+  border:1px solid var(--line);border-radius:var(--r);background:var(--card);
+  margin-top:8px;
+}
+.sindrow{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:9px 12px;font-size:14px;color:var(--ink2);cursor:pointer;
+  border-bottom:1px solid var(--line);
+}
+.sindlist .sindrow:last-child{border-bottom:none}
+.sindrow[aria-pressed="true"]{background:var(--ink);color:#fff}
+.sindrow .cnt{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink3);flex:0 0 auto}
+.sindrow[aria-pressed="true"] .cnt{color:#C7D0D8}
+.sindrow.poca .cnt{color:var(--pen)}
+.sindrow.poca[aria-pressed="true"] .cnt{color:#F3C6CC}
+.sindlist .vacio{padding:14px 12px;color:var(--ink3);font-size:13.5px}
+
 .start{
   width:100%;background:var(--ink);color:#fff;
   padding:15px;border-radius:var(--r);
@@ -682,7 +701,9 @@ body.nt-editando .nt-hoja .nt-cuerpo{min-height:220px;}
     </div>
     <div class="group">
       <p class="eyebrow">Filtrar por síndrome</p>
-      <div class="chips" id="f-sind"></div>
+      <input class="search" id="f-sind-buscar" type="search" placeholder="Buscar un tema…" autocomplete="off">
+      <div class="sindlist" id="f-sind"></div>
+      <p class="ayuda">En rojo, los que tienen pocas preguntas. Para juntar uno chico dentro de uno más grande: Biblioteca → esa regla → Editar → escribí el nombre del síndrome grande en el que querés que caiga.</p>
     </div>
     <div class="group">
       <p class="eyebrow">Filtrar por tipo de decisión</p>
@@ -6324,22 +6345,27 @@ const uniq = k => [...new Set(BANCO.map(q => q[k]))];
 // sin verificar contra la fuente, o directamente no tiene respuesta correcta asignada todavía.
 const esDudosa = q => !!(q.respuesta_ia_no_verificada || q.caso_reconstruido
   || q.respuesta_pendiente || q.respuesta_correcta_no_disponible_en_el_pack);
-// mapa pregunta → síndromes que la usan como evidencia (viene de REGLAS, se arma una sola vez)
-let _sindPorPregunta = null;
-function sindDePregunta(id){
-  if(!_sindPorPregunta){
-    _sindPorPregunta = {};
-    REGLAS.forEach(r => {
-      const eff = reglaEfectiva(r);
-      r.qs.forEach(qid => (_sindPorPregunta[qid] = _sindPorPregunta[qid] || new Set()).add(eff.sind));
-    });
-  }
-  return _sindPorPregunta[id] || new Set();
+// mapa pregunta → síndromes que la usan como evidencia (viene de REGLAS).
+// Se recalcula en cada llamado: son 74 reglas, no vale la pena memoizarlo y
+// arriesgarse a mostrar algo viejo si el usuario acaba de renombrar un síndrome
+// desde Biblioteca (reglaEfectiva ya tiene en cuenta esa personalización).
+function mapaSindPorPregunta(){
+  const mapa = {};
+  REGLAS.forEach(r => {
+    const eff = reglaEfectiva(r);
+    r.qs.forEach(qid => (mapa[qid] = mapa[qid] || new Set()).add(eff.sind));
+  });
+  return mapa;
 }
-function uniqSind(){
-  const set = new Set();
-  REGLAS.forEach(r => set.add(reglaEfectiva(r).sind));
-  return [...set];
+function sindDePregunta(id, mapa){
+  return (mapa || mapaSindPorPregunta())[id] || new Set();
+}
+function conteoSind(){
+  // { síndrome: cantidad de preguntas que lo respaldan }
+  const mapa = mapaSindPorPregunta();
+  const cuentas = {};
+  Object.values(mapa).forEach(set => set.forEach(v => cuentas[v] = (cuentas[v] || 0) + 1));
+  return cuentas;
 }
 
 /* ═══ Supabase (sincronización en la nube) ═══
@@ -6791,6 +6817,37 @@ function chip(txt, n, on, cb){
   b.onclick = () => { cb(); pintarChips(); };
   return b;
 }
+function normalizarTexto(s){
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+}
+/* lista de síndromes: buscable y ordenada por cuántas preguntas respalda cada
+   uno, para no tener que escanear una pared de etiquetas. Los que quedaron con
+   pocas preguntas se ven en rojo — conviene fusionarlos desde Biblioteca. */
+function pintarSind(){
+  const el = $('#f-sind');
+  if(!el) return;
+  const q = normalizarTexto($('#f-sind-buscar').value);
+  let entradas = Object.entries(conteoSind());
+  if(q) entradas = entradas.filter(([v]) => normalizarTexto(v).includes(q));
+  entradas.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+  el.innerHTML = '';
+  if(!entradas.length){
+    el.innerHTML = '<p class="vacio">Ningún síndrome coincide con esa búsqueda.</p>';
+    return;
+  }
+  entradas.forEach(([v, n]) => {
+    const row = document.createElement('div');
+    row.className = 'sindrow' + (n < 3 ? ' poca' : '');
+    row.setAttribute('aria-pressed', filtro.sind.has(v));
+    row.innerHTML = '<span>' + escHtml(v) + '</span><span class="cnt">' + n + '</span>';
+    row.onclick = () => {
+      filtro.sind.has(v) ? filtro.sind.delete(v) : filtro.sind.add(v);
+      pintarChips();
+    };
+    el.appendChild(row);
+  });
+}
 function pintarChips(){
   const box = (id, key) => {
     const el = $(id); el.innerHTML = '';
@@ -6802,14 +6859,7 @@ function pintarChips(){
     });
   };
   box('#f-examen','examen'); box('#f-area','area'); box('#f-tipo','tipo');
-
-  const sindEl = $('#f-sind'); sindEl.innerHTML = '';
-  uniqSind().forEach(v => {
-    const n = BANCO.filter(q => sindDePregunta(q.id).has(v)).length;
-    sindEl.appendChild(chip(v, n, filtro.sind.has(v), () => {
-      filtro.sind.has(v) ? filtro.sind.delete(v) : filtro.sind.add(v);
-    }));
-  });
+  pintarSind();
 
   const m = $('#f-modo'); m.innerHTML = '';
   const areaMasFloja = areaSugerida();
@@ -8304,6 +8354,7 @@ function aplicarPreferenciasNotas(){
 $('#btn-start').onclick = () =>
   arrancar(armarMazo(), {examen: filtro.estilo === 'examen', yaOrdenado: true});
 $('#btn-confirm').onclick = resolver;
+$('#f-sind-buscar').oninput = pintarSind;
 
 /* ═══ atajos de teclado: 1‑9 elige la opción, Enter confirma o avanza ═══ */
 document.addEventListener('keydown', e => {
