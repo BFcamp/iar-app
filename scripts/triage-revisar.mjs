@@ -26,11 +26,52 @@ const SOLO = (() => {
 // ── fuentes ──
 const PACK_JSON = "fuentes/pack_preguntas.json";
 const PACK_MD = "fuentes/pack_preguntas_texto.md";
+const IMG_MD = "fuentes/transcripcion_PACK_CHOICE_imagenes.md";
 
 const html = readFileSync(join(RAIZ, "index.html"), "utf8");
 const pack = JSON.parse(readFileSync(join(RAIZ, PACK_JSON), "utf8"));
 const md = readFileSync(join(RAIZ, PACK_MD), "utf8");
+const img = readFileSync(join(RAIZ, IMG_MD), "utf8");
 const mdLineas = md.split("\n");
+const imgLineas = img.split("\n");
+
+// La transcripción de las páginas-imagen viene en bloques "### Pregunta N".
+const bloquesImg = (() => {
+  const out = [];
+  let actual = null;
+  imgLineas.forEach((l, k) => {
+    if (l.startsWith("### ")) {
+      actual = { titulo: l.slice(4).trim(), linea: k + 1, cuerpo: [], opciones: [] };
+      out.push(actual);
+    } else if (actual) {
+      actual.cuerpo.push(l);
+      const m = l.match(/^([a-o])\.\s+(.*)$/);
+      if (m) actual.opciones.push(m[2].trim());
+    }
+  });
+  return out.filter((b) => b.opciones.length);
+})();
+
+// Solapamiento entre dos listas de opciones: 1 = mismo juego de opciones.
+const tokens = (t) => new Set((t || "")
+  .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean));
+function solape(a, b) {
+  if (!a.length || !b.length) return 0;
+  const A = a.map(tokens), B = b.map(tokens);
+  let suma = 0;
+  for (const x of A) {
+    if (!x.size) continue;
+    let mejor = 0;
+    for (const y of B) {
+      const inter = [...x].filter((t) => y.has(t)).length;
+      const union = new Set([...x, ...y]).size;
+      mejor = Math.max(mejor, union ? inter / union : 0);
+    }
+    suma += mejor;
+  }
+  return suma / A.length;
+}
 
 function leerBanco() {
   const A = "const BANCO = [", Z = "BANCO5.forEach(q => BANCO.push(q));";
@@ -169,6 +210,81 @@ function casoVecino(p) {
   };
 }
 
+// ── rescate de una consigna perdida ──
+// Tres vías, en orden de confianza:
+//   1. gemela en el propio pack. El PDF repite el mismo examen en varios
+//      intentos: el bloque de pp. 265-274 trae una pregunta por página con
+//      su caso entero, y el de pp. 323-336 lo repite partido en dos y sin
+//      enunciado. Mismo juego de opciones = misma pregunta.
+//   2. la transcripción de las páginas-imagen.
+//   3. la compañera de página: las repreguntas ("¿y ahora qué conducta?")
+//      no tienen gemela propia, pero cuelgan del caso de la pregunta de
+//      al lado, que sí se recuperó.
+function buscarConsigna(p) {
+  const mias = p.opciones.map((o) => o.texto);
+  const pruebas = [];
+
+  let mejor = null;
+  for (const q of pack) {
+    if (q.id === p.id) continue;
+    const sc = solape(mias, q.opciones.map((o) => o.texto));
+    if (sc >= 0.8 && limpio(q.enunciado.replace(BOILER, " ")).length > 40) {
+      if (!mejor || sc > mejor.sc) mejor = { q, sc };
+    }
+    BOILER.lastIndex = 0;
+  }
+  if (mejor) {
+    pruebas.push("gemela exacta en el pack: " + mejor.q.id + " (p. " + mejor.q.pagina
+      + ", solape de opciones " + mejor.sc.toFixed(2) + "), y esa sí conserva el enunciado");
+    return { recuperable: "sí", fuente: PACK_MD + ":" + lineaMd(mejor.q.id)
+      + " (gemela " + mejor.q.id + ", p. " + mejor.q.pagina + ")", pruebas };
+  }
+
+  let mejorImg = null;
+  for (const b of bloquesImg) {
+    const sc = solape(mias, b.opciones);
+    if (sc >= 0.5 && (!mejorImg || sc > mejorImg.sc)) mejorImg = { b, sc };
+  }
+  if (mejorImg) {
+    pruebas.push("aparece en la transcripción de páginas-imagen: " + mejorImg.b.titulo
+      + " (solape de opciones " + mejorImg.sc.toFixed(2) + ")");
+    if (mejorImg.sc < 0.95) {
+      pruebas.push("el juego de opciones no es idéntico: son dos variantes de la misma pregunta,"
+        + " sirve la consigna pero hay que respetar las opciones que trae el pack");
+    }
+    return { recuperable: mejorImg.sc < 0.95 ? "dudoso" : "sí", fuente: IMG_MD + ":" + mejorImg.b.linea
+      + " (" + mejorImg.b.titulo + ")", pruebas };
+  }
+
+  // 3. compañera de página con gemela propia
+  const companeras = (porPagina[p.pagina] || []).filter((x) => x.id !== p.id);
+  for (const c of companeras) {
+    const r = buscarGemelaSimple(c);
+    if (r) {
+      pruebas.push("es una repregunta: no tiene gemela propia, pero su compañera de página "
+        + c.id + " sí (" + r.id + "), y de ahí sale el caso");
+      pruebas.push("la consigna puntual de esta pregunta sigue perdida: se recupera el caso, no el texto de la pregunta");
+      return { recuperable: "dudoso", fuente: PACK_MD + ":" + lineaMd(r.id)
+        + " (caso vía " + c.id + " → " + r.id + ")", pruebas };
+    }
+  }
+
+  return { recuperable: "no",
+    fuente: "no aparece en ninguna de las tres fuentes del repo · haría falta el PDF original", pruebas };
+}
+function buscarGemelaSimple(p) {
+  const mias = p.opciones.map((o) => o.texto);
+  for (const q of pack) {
+    if (q.id === p.id) continue;
+    if (solape(mias, q.opciones.map((o) => o.texto)) >= 0.8) {
+      BOILER.lastIndex = 0;
+      if (limpio(q.enunciado.replace(BOILER, " ")).length > 40) return q;
+    }
+    BOILER.lastIndex = 0;
+  }
+  return null;
+}
+
 // ── clasificación ──
 function clasificar(q) {
   const p = q.procedencia && porId[q.procedencia.id_original];
@@ -198,9 +314,10 @@ function clasificar(q) {
     if (resto.length < 25) {
       pruebas.push("sacado el boilerplate no queda consigna (quedan " + resto.length
         + " caracteres): al extraer la capa de texto solo entró el encabezado del aula");
-      recuperable = "no";
-      fuente = "la consigna no está en ninguna de las dos fuentes del repo"
-        + " · el .md cita transcripcion_PACK_CHOICE_imagenes.md y el PDF original, que no están acá";
+      const rescate = buscarConsigna(p);
+      pruebas.push(...rescate.pruebas);
+      recuperable = rescate.recuperable;
+      fuente = rescate.fuente;
     } else {
       pruebas.push('debajo del boilerplate sí queda consigna: "' + recorte(resto, 60) + '"');
       recuperable = "sí";
