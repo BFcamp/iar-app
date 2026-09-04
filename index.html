@@ -350,6 +350,8 @@ textarea.ed-op-nota{min-height:44px;resize:vertical;font-size:13.5px;margin:0}
 }
 .combo-lista .sindrow{padding:8px 11px; font-size:14px}
 .combo-lista .sindrow .cnt{display:none}
+.combo-lista .sindrow-nueva{color:var(--pen);font-weight:600;
+  border-top:1px solid var(--line)}
 .sh-btns .act{flex:1;text-align:center}
 .act.pri.del{background:var(--pen);border-color:var(--pen);color:#fff}
 
@@ -408,6 +410,11 @@ h1{
 .sindrow.poca .cnt{color:var(--pen)}
 .sindrow.poca[aria-pressed="true"] .cnt{color:#F3C6CC}
 .sindlist .vacio{padding:14px 12px;color:var(--ink3);font-size:13.5px}
+.sindrow-edit{flex:0 0 auto;border:none;background:transparent;color:var(--ink3);
+  font-size:14px;line-height:1;padding:4px 6px;margin:-4px -4px -4px 0;border-radius:6px;cursor:pointer}
+.sindrow-edit:hover{background:rgba(15,24,33,.08);color:var(--ink)}
+.sindrow[aria-pressed="true"] .sindrow-edit{color:#C7D0D8}
+.sindrow[aria-pressed="true"] .sindrow-edit:hover{background:rgba(255,255,255,.15);color:#fff}
 
 .start{
   width:100%;background:var(--ink);color:#fff;
@@ -15972,17 +15979,24 @@ function subrayarSeleccion(q){
 // combo propio para los campos de clasificación del modal de editar: se puede
 // escribir un valor nuevo o elegir uno de la lista con la flecha, que siempre
 // responde (a diferencia del <input list> nativo, cuya flechita varía mucho
-// entre navegadores y en algunos ni se ve).
+// entre navegadores y en algunos ni se ve). Si lo que se escribe no coincide
+// con ninguna opción existente, se suma al final una fila "Crear ‹valor›" para
+// que quede claro que ese texto va a dar de alta una opción nueva (por ejemplo
+// una especialidad) y no es un error de tipeo.
 function comboBuscable(inputId, opciones){
   const input = document.getElementById(inputId);
   const lista = document.getElementById(inputId + '-lista');
   const flecha = input.nextElementSibling;
   const pintar = () => {
-    const q = normalizarTexto(input.value);
+    const crudo = input.value.trim();
+    const q = normalizarTexto(crudo);
     const filtradas = q ? opciones.filter(v => normalizarTexto(v).includes(q)) : opciones;
-    if(!filtradas.length){ lista.hidden = true; return; }
+    const esNueva = crudo && !opciones.some(v => normalizarTexto(v) === q);
+    if(!filtradas.length && !esNueva){ lista.hidden = true; return; }
     lista.innerHTML = filtradas.map(v =>
-      '<div class="sindrow" data-v="' + escAttr(v) + '">' + escHtml(v) + '</div>').join('');
+      '<div class="sindrow" data-v="' + escAttr(v) + '">' + escHtml(v) + '</div>').join('')
+      + (esNueva ? '<div class="sindrow sindrow-nueva" data-v="' + escAttr(crudo) + '">'
+          + '➕ Crear «' + escHtml(crudo) + '»</div>' : '');
     lista.hidden = false;
     lista.querySelectorAll('[data-v]').forEach(fila => {
       // mousedown (no click): corre antes del blur del input, si no la lista
@@ -16024,11 +16038,13 @@ function editarPregunta(q){
     + '<textarea class="sh-in ed-area" id="ed-p-pregunta">' + escHtml(q.pregunta) + '</textarea>'
     + '<label class="ed-lb">Opciones</label>'
     + '<div id="ed-p-opciones">' + q.opciones.map(filaOpcion).join('') + '</div>'
+    + '<label class="ed-lb">Clasificación</label>'
     + '<div class="ed-clasif">'
-      + campoCombo('ed-p-area', 'Área', q.area)
+      + campoCombo('ed-p-area', 'Especialidad', q.area)
       + campoCombo('ed-p-tipo', 'Tipo de decisión', q.tipo)
       + campoCombo('ed-p-examen', 'Examen', q.examen)
     + '</div>'
+    + '<p class="ayuda">Especialidad, tipo de decisión y examen: elegí uno existente con la flecha o escribí uno nuevo para crearlo.</p>'
     + '<div class="sh-btns"><button class="act pri" id="ed-p-ok">Guardar</button>'
     + '<button class="act" id="ed-p-reset">Restaurar original</button>'
     + '<button class="act" id="ed-p-no">Cancelar</button></div>');
@@ -16126,8 +16142,11 @@ function pintarBanco(){
   Object.entries(contarBancoPorArea()).sort((a, b) => b[1] - a[1]).forEach(([v, n]) => {
     const row = document.createElement('div');
     row.className = 'sindrow';
-    row.innerHTML = '<span>' + escHtml(v) + '</span><span class="cnt">' + n + '</span>';
+    row.innerHTML = '<span>' + escHtml(v) + '</span>'
+      + '<button type="button" class="sindrow-edit" title="Renombrar o fusionar esta especialidad">✏️</button>'
+      + '<span class="cnt">' + n + '</span>';
     row.onclick = () => entrarBanco(BANCO.filter(q => q.area === v && !preguntaEliminada(q)));
+    row.querySelector('.sindrow-edit').onclick = e => { e.stopPropagation(); renombrarEspecialidad(v, n); };
     areaEl.appendChild(row);
   });
 
@@ -16136,6 +16155,46 @@ function pintarBanco(){
   const nElim = BANCO.filter(preguntaEliminada).length;
   $('#bk-papelera-n').textContent = nElim;
   $('#bk-papelera-btn').disabled = !nElim;
+}
+// renombrar (o fusionar) una especialidad completa desde la pantalla de
+// categorías de Banco: aplica la nueva especialidad a todas las preguntas que
+// hoy tienen `v`, como un override personal más por pregunta (mismo mecanismo
+// que editar una pregunta suelta). Elegir una especialidad ya existente la
+// fusiona con esa; escribir una nueva la renombra.
+function renombrarEspecialidad(v, n){
+  const opciones = [...new Set(BANCO.map(x => x.area))].filter(Boolean).filter(a => a !== v).sort();
+  const campoCombo = (id, label, valor) =>
+    '<div class="combo">'
+      + '<input class="sh-in" id="' + id + '" value="' + escAttr(valor) + '" placeholder="' + escAttr(label) + '" autocomplete="off">'
+      + '<button type="button" class="combo-arrow" tabindex="-1">▾</button>'
+      + '<div class="combo-lista sindlist" id="' + id + '-lista" hidden></div>'
+    + '</div>';
+  const el = hoja('<p class="sh-t">Renombrar especialidad</p>'
+    + '<p class="sh-s">«' + escHtml(v) + '» · ' + n + (n === 1 ? ' pregunta' : ' preguntas') + '</p>'
+    + '<label class="ed-lb">Especialidad</label>'
+    + campoCombo('rn-esp', 'Especialidad', v)
+    + '<p class="ayuda">Elegí una especialidad ya existente para fusionar «' + escHtml(v) + '» con ella, '
+      + 'o escribí un nombre nuevo para renombrarla. Se aplica a las ' + n + (n === 1 ? ' pregunta.' : ' preguntas.')
+    + '</p>'
+    + '<div class="sh-btns"><button class="act pri" id="rn-esp-ok">Guardar</button>'
+    + '<button class="act" id="rn-esp-no">Cancelar</button></div>');
+  comboBuscable('rn-esp', opciones);
+  const cerrar = () => el.remove();
+  el.onclick = e => { if(e.target === el) cerrar(); };
+  $('#rn-esp-no').onclick = cerrar;
+  $('#rn-esp-ok').onclick = () => {
+    const nuevo = $('#rn-esp').value.trim();
+    if(!nuevo || nuevo === v){ cerrar(); return; }
+    BANCO.filter(q => q.area === v && !preguntaEliminada(q)).forEach(q => {
+      const s = stats[q.id] = stats[q.id] || {seen:0, ok:0, flag:false};
+      s.ovArea = nuevo;
+      aplicarOverridePregunta(q);
+    });
+    guardar();
+    cerrar();
+    toast('Especialidad actualizada');
+    pintarBanco();
+  };
 }
 async function verPapelera(){
   const eliminadas = BANCO.filter(preguntaEliminada);
