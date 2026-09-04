@@ -317,6 +317,20 @@ body.en-lab .top{box-shadow:inset 0 3px 0 #B45309}
   background:var(--card);color:var(--ink);border-radius:var(--r);
   padding:12px 13px;margin:6px 0 13px}
 .sh-btns{display:flex;gap:8px}
+
+/* editar pregunta (Banco) */
+.ed-lb{display:block;font-size:10.5px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink3);margin:10px 0 2px}
+textarea.ed-area{min-height:64px;resize:vertical;font-family:'IBM Plex Serif',serif;font-size:14.5px}
+.ed-op-row{border:1px solid var(--line);border-radius:var(--r);background:var(--card);
+  padding:10px 11px;margin-bottom:8px}
+.ed-op-ok{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;
+  color:var(--ink3);margin-bottom:6px}
+.ed-op-t{margin:0 0 6px}
+textarea.ed-op-nota{min-height:44px;resize:vertical;font-size:13.5px;margin:0}
+.ed-clasif{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
+.ed-clasif .sh-in{margin:0}
+@media (max-width:520px){ .ed-clasif{grid-template-columns:1fr} }
 .sh-btns .act{flex:1;text-align:center}
 .act.pri.del{background:var(--pen);border-color:var(--pen);color:#fff}
 
@@ -394,6 +408,16 @@ h1{
 .tagpill.hi{background:var(--hl);color:#5C4A00}
 .tagpill.rec{background:#E3DCEF;color:#4C3A73}
 .tagpill.exam{background:#DCEFEA;color:#0E6C54}
+
+/* ── Banco: toolbar de edición sobre la pregunta que se está viendo ── */
+.bktools{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.bktools button{
+  border:1px solid var(--line);background:var(--card);color:var(--ink2);
+  padding:6px 11px;border-radius:var(--r);font-size:12.5px;font-weight:600;cursor:pointer;
+}
+.bktools button.del{color:var(--pen);border-color:#E8C4C9}
+.bktools button.ov{color:var(--ok);border-color:#B9DED2}
+u{text-decoration-color:var(--pen);text-decoration-thickness:2px;text-underline-offset:2px}
 .origen-nota{
   font-size:12.5px;color:var(--ink3);line-height:1.5;
   border-left:2px solid var(--line);padding-left:11px;margin:0 0 13px;
@@ -733,6 +757,7 @@ body.nt-editando .nt-hoja .nt-cuerpo{min-height:220px;}
     </div>
     <nav class="tabs" id="tabs">
       <button class="tab" data-go="practicar" aria-pressed="true">Practicar</button>
+      <button class="tab" data-go="banco" aria-pressed="false">Banco</button>
       <button class="tab" data-go="biblioteca" aria-pressed="false">Biblioteca</button>
       <button class="tab" data-go="espacio" aria-pressed="false">Notas</button>
     </nav>
@@ -792,9 +817,30 @@ body.nt-editando .nt-hoja .nt-cuerpo{min-height:220px;}
     <p class="saved" id="saved"></p>
   </section>
 
+  <!-- BANCO: categorías -->
+  <section class="screen" id="s-banco">
+    <h1>Banco</h1>
+    <p class="lede">Todas las preguntas, para leer, practicar y corregir sobre la marcha. Entrás por categoría; los cambios que hagas son personales tuyos — no tocan el archivo original, y podés deshacerlos cuando quieras.</p>
+
+    <button class="start" id="bk-entrar-todas">Entrar por todas · <span id="bk-total-n">0</span> preguntas</button>
+
+    <div class="group">
+      <p class="eyebrow">Por área</p>
+      <div class="sindlist" id="bk-area"></div>
+    </div>
+    <div class="group">
+      <p class="eyebrow">Por síndrome</p>
+      <input class="search" id="bk-sind-buscar" type="search" placeholder="Buscar un tema…" autocomplete="off">
+      <div class="sindlist" id="bk-sind"></div>
+    </div>
+
+    <button class="ghost" id="bk-papelera-btn">Ver papelera (<span id="bk-papelera-n">0</span>)</button>
+  </section>
+
   <!-- PREGUNTA -->
   <section class="screen" id="s-q">
     <div class="meta" id="q-meta"></div>
+    <div class="bktools" id="bk-toolbar" hidden></div>
     <div class="caso" id="q-caso"></div>
     <p class="prompt" id="q-prompt"></p>
     <p class="hint" id="q-hint"></p>
@@ -14947,6 +14993,7 @@ const filtro = {
 };
 let mazo = [], i = 0, sel = new Set(), respondida = false, notaTimer = null;
 let modoExamenActivo = false;
+let modoBanco = false;          // true = se entró desde la pestaña Banco (habilita editar/eliminar/subrayar)
 const sesion = [];              // [{id,area,tipo,acierto}]
 
 const $ = s => document.querySelector(s);
@@ -14960,6 +15007,45 @@ const uniq = k => [...new Set(BANCO.map(q => q[k]))];
 const esDudosa = q => !!(q.respuesta_ia_no_verificada || q.caso_reconstruido
   || q.respuesta_pendiente || q.respuesta_correcta_no_disponible_en_el_pack
   || q.revisar);
+
+/* ═══ Banco: overrides personales por pregunta ═══
+   Mismo criterio que bibPersonal para las Reglas: lo que se edita/elimina/
+   subraya desde la pestaña Banco se guarda en stats[q.id] (que ya sincroniza
+   con Supabase vía guardar()), nunca se reescribe BANCO ni el archivo real.
+   BANCO_ORIGINAL guarda una foto del banco tal cual llegó, para poder
+   "Restaurar original" sin depender de recargar la página. */
+const BANCO_ORIGINAL = BANCO.map(q => JSON.parse(JSON.stringify(q)));
+const preguntaEliminada = q => !!(stats[q.id] && stats[q.id].eliminada);
+const preguntaEditada = q => {
+  const s = stats[q.id];
+  return !!(s && (s.ovCaso != null || s.ovPregunta != null || s.ovArea != null
+    || s.ovTipo != null || s.ovExamen != null || s.ovOpciones != null));
+};
+function aplicarOverridePregunta(q){
+  const s = stats[q.id];
+  if(!s) return;
+  if(s.ovCaso != null) q.caso = s.ovCaso;
+  if(s.ovPregunta != null) q.pregunta = s.ovPregunta;
+  if(s.ovArea != null) q.area = s.ovArea;
+  if(s.ovTipo != null) q.tipo = s.ovTipo;
+  if(s.ovExamen != null) q.examen = s.ovExamen;
+  if(s.ovOpciones != null) q.opciones = s.ovOpciones;
+}
+function aplicarOverridesPreguntas(){ BANCO.forEach(aplicarOverridePregunta); }
+function restaurarPreguntaOriginal(q){
+  const s = stats[q.id];
+  if(s){
+    delete s.ovCaso; delete s.ovPregunta; delete s.ovArea;
+    delete s.ovTipo; delete s.ovExamen; delete s.ovOpciones;
+  }
+  const orig = BANCO_ORIGINAL.find(o => o.id === q.id);
+  if(orig){
+    q.caso = orig.caso; q.pregunta = orig.pregunta; q.area = orig.area;
+    q.tipo = orig.tipo; q.examen = orig.examen;
+    q.opciones = JSON.parse(JSON.stringify(orig.opciones));
+  }
+  guardar();
+}
 // mapa pregunta → síndromes que la usan como evidencia (viene de REGLAS).
 // Se recalcula en cada llamado: son 74 reglas, no vale la pena memoizarlo y
 // arriesgarse a mostrar algo viejo si el usuario acaba de renombrar un síndrome
@@ -15435,6 +15521,7 @@ async function manejarSesion(session){
     await cargarPreferenciasNotas();
     await cargarBibPersonal();
   }
+  aplicarOverridesPreguntas();
   pintarChips(); pintarEstado();
   aplicarPreferenciasNotas();
   const activa = document.querySelector('.tab[aria-pressed="true"]');
@@ -15486,7 +15573,7 @@ function pintarChips(){
   const box = (id, key) => {
     const el = $(id); el.innerHTML = '';
     uniq(key).forEach(v => {
-      const n = BANCO.filter(q => q[key] === v).length;
+      const n = BANCO.filter(q => q[key] === v && !preguntaEliminada(q)).length;
       el.appendChild(chip(v, n, filtro[key].has(v), () => {
         filtro[key].has(v) ? filtro[key].delete(v) : filtro[key].add(v);
       }));
@@ -15567,6 +15654,7 @@ function areaSugerida(){
 }
 function disponibles(modo){
   return BANCO.filter(q => {
+    if(preguntaEliminada(q)) return false;   // lo que se borra desde Banco no vuelve a aparecer acá
     const s = stats[q.id];
     if(modo === 'sugerido'){
       const peor = areaSugerida();
@@ -15635,6 +15723,7 @@ function ir(id){
 function arrancar(lista, opts){
   opts = opts || {};
   modoExamenActivo = !!opts.examen;
+  modoBanco = !!opts.banco;
   mazo = opts.yaOrdenado ? lista.slice() : shuffle(lista);
   i = 0; sesion.length = 0;
   pintarStrip(); mostrar(); ir('#s-q');
@@ -15657,11 +15746,13 @@ function fmt(t){
   return t
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/==(.+?)==/g,'<mark>$1</mark>')
+    .replace(/__(.+?)__/g,'<u>$1</u>')
     .replace(/`(.+?)`/g,'<code>$1</code>');
 }
 function escHtml(t){
   return (t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;');
 }
+const escAttr = t => escHtml(t).replace(/"/g,'&quot;');
 function mostrar(){
   const q = mazo[i];
   sel = new Set(); respondida = false;
@@ -15683,13 +15774,16 @@ function mostrar(){
   }
   if(modoExamenActivo) pills.push('<span class="tagpill exam">Examen</span>');
   $('#q-meta').innerHTML = pills.join('');
+  pintarToolbarBanco(q);
 
   // En 89 preguntas el caso viene vacío porque la viñeta está dentro del
   // enunciado. Sin esto se dibuja una caja con borde y nada adentro.
   const hayCaso = !!(q.caso || '').trim();
   $('#q-caso').innerHTML = hayCaso ? fmt(q.caso) : '';
   $('#q-caso').hidden = !hayCaso;
-  $('#q-prompt').textContent = q.pregunta;
+  // pasa por fmt() (no textContent) para que =resaltado= y _subrayado_ del
+  // enunciado también se vean, igual que ya pasa en el caso y las opciones.
+  $('#q-prompt').innerHTML = fmt(q.pregunta);
   $('#q-hint').textContent = modoExamenActivo
     ? 'No se corrige hasta el final. ' + (q.n > 1 ? 'Marcá ' + q.n + ' opciones.' : 'Una sola opción.')
     : (q.n > 1 ? 'Marcá ' + q.n + ' opciones.' : 'Una sola opción.') + ' Podés responder con los números del teclado.';
@@ -15736,6 +15830,227 @@ function registrarRespuesta(q, acierto){
   guardar();
   sesion[i] = {id:q.id, area:q.area, tipo:q.tipo, acierto};
   pintarStrip();
+}
+
+/* ═══ Banco: leer/editar/eliminar/subrayar sobre la marcha ═══ */
+function pintarToolbarBanco(q){
+  const box = $('#bk-toolbar');
+  if(!modoBanco){ box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  const editada = preguntaEditada(q);
+  box.innerHTML =
+      '<button id="bk-editar">✏️ Editar</button>'
+    + '<button id="bk-subrayar">Subrayar selección</button>'
+    + (editada ? '<button class="ov" id="bk-restaurar">↺ Restaurar original</button>' : '')
+    + '<button class="del" id="bk-eliminar">🗑 Eliminar</button>';
+  $('#bk-editar').onclick = () => editarPregunta(q);
+  $('#bk-subrayar').onclick = () => subrayarSeleccion(q);
+  if(editada) $('#bk-restaurar').onclick = () => {
+    restaurarPreguntaOriginal(q); mostrar(); toast('Restaurada a la versión original');
+  };
+  $('#bk-eliminar').onclick = () => eliminarPregunta(q);
+}
+async function eliminarPregunta(q){
+  const ok = await confirmar('¿Eliminar esta pregunta? Va a la papelera: la podés restaurar cuando quieras desde ahí.', 'Eliminar');
+  if(!ok) return;
+  const s = stats[q.id] = stats[q.id] || {seen:0, ok:0, flag:false};
+  s.eliminada = true;
+  s.eliminadaEn = new Date().toISOString();
+  guardar();
+  toast('Movida a la papelera');
+  avanzar();
+}
+// determina si el nodo donde está parada la selección cae dentro del caso, el
+// enunciado, o una opción puntual (por su índice real)
+function campoDeSeleccion(nodo){
+  if(!nodo) return null;
+  const el = nodo.nodeType === 1 ? nodo : nodo.parentElement;
+  if(!el) return null;
+  if($('#q-caso').contains(el)) return 'caso';
+  if($('#q-prompt').contains(el)) return 'pregunta';
+  const opt = el.closest ? el.closest('.opt') : null;
+  if(opt && $('#q-opts').contains(opt)) return 'opcion:' + opt.dataset.real;
+  return null;
+}
+// subrayar es, en el fondo, envolver el texto elegido entre __marcas__ (mismo
+// mecanismo que ==resaltado==) y guardarlo como una edición más del campo.
+// Seleccionar de nuevo el mismo texto ya subrayado lo saca.
+function subrayarSeleccion(q){
+  const winSel = window.getSelection();
+  const texto = winSel && winSel.toString().trim();
+  if(!texto){ toast('Seleccioná una frase primero'); return; }
+  const campo = campoDeSeleccion(winSel.anchorNode);
+  if(!campo){ toast('Seleccioná texto dentro del caso, el enunciado o una opción'); return; }
+
+  const aplicarEnTexto = original => {
+    const marcado = '__' + texto + '__';
+    if(original.includes(marcado)) return original.replace(marcado, texto);
+    if(original.includes(texto)) return original.replace(texto, marcado);
+    return null;
+  };
+  const s = stats[q.id] = stats[q.id] || {seen:0, ok:0, flag:false};
+  if(campo === 'caso'){
+    const nuevo = aplicarEnTexto(q.caso);
+    if(nuevo == null){ toast('No pude ubicar exactamente esa selección'); return; }
+    s.ovCaso = nuevo;
+  } else if(campo === 'pregunta'){
+    const nuevo = aplicarEnTexto(q.pregunta);
+    if(nuevo == null){ toast('No pude ubicar exactamente esa selección'); return; }
+    s.ovPregunta = nuevo;
+  } else {
+    const k = Number(campo.split(':')[1]);
+    const opciones = (s.ovOpciones || q.opciones).map(o => Object.assign({}, o));
+    const nuevo = aplicarEnTexto(opciones[k].t);
+    if(nuevo == null){ toast('No pude ubicar exactamente esa selección'); return; }
+    opciones[k].t = nuevo;
+    s.ovOpciones = opciones;
+  }
+  aplicarOverridePregunta(q);
+  guardar();
+  winSel.removeAllRanges();
+  mostrar();
+}
+function editarPregunta(q){
+  const filaOpcion = (o, k) =>
+    '<div class="ed-op-row">'
+      + '<label class="ed-op-ok"><input type="checkbox" class="ed-ok" data-k="' + k + '"'
+      + (o.ok ? ' checked' : '') + '> correcta</label>'
+      + '<input class="sh-in ed-op-t" data-k="' + k + '" value="' + escAttr(o.t) + '">'
+      + '<textarea class="sh-in ed-op-nota" data-k="' + k + '" placeholder="Nota / explicación">'
+      + escHtml(o.nota || '') + '</textarea>'
+    + '</div>';
+  const opcionesDatalist = key => [...new Set(BANCO.map(x => x[key]))].filter(Boolean)
+    .map(v => '<option value="' + escAttr(v) + '">').join('');
+
+  const el = hoja('<p class="sh-t">Editar pregunta</p>'
+    + '<p class="sh-s">' + escHtml(q.id) + ' — esto es personal tuyo, no toca el archivo original.</p>'
+    + '<label class="ed-lb">Caso</label>'
+    + '<textarea class="sh-in ed-area" id="ed-p-caso">' + escHtml(q.caso) + '</textarea>'
+    + '<label class="ed-lb">Enunciado</label>'
+    + '<textarea class="sh-in ed-area" id="ed-p-pregunta">' + escHtml(q.pregunta) + '</textarea>'
+    + '<label class="ed-lb">Opciones</label>'
+    + '<div id="ed-p-opciones">' + q.opciones.map(filaOpcion).join('') + '</div>'
+    + '<div class="ed-clasif">'
+      + '<input class="sh-in" id="ed-p-area" list="dl-p-area" value="' + escAttr(q.area) + '" placeholder="Área">'
+      + '<datalist id="dl-p-area">' + opcionesDatalist('area') + '</datalist>'
+      + '<input class="sh-in" id="ed-p-tipo" list="dl-p-tipo" value="' + escAttr(q.tipo) + '" placeholder="Tipo de decisión">'
+      + '<datalist id="dl-p-tipo">' + opcionesDatalist('tipo') + '</datalist>'
+      + '<input class="sh-in" id="ed-p-examen" list="dl-p-examen" value="' + escAttr(q.examen) + '" placeholder="Examen">'
+      + '<datalist id="dl-p-examen">' + opcionesDatalist('examen') + '</datalist>'
+    + '</div>'
+    + '<div class="sh-btns"><button class="act pri" id="ed-p-ok">Guardar</button>'
+    + '<button class="act" id="ed-p-reset">Restaurar original</button>'
+    + '<button class="act" id="ed-p-no">Cancelar</button></div>');
+
+  $('#ed-p-no').onclick = () => el.remove();
+  el.onclick = e => { if(e.target === el) el.remove(); };
+  $('#ed-p-reset').onclick = () => {
+    restaurarPreguntaOriginal(q);
+    el.remove(); mostrar();
+    toast('Restaurada a la versión original');
+  };
+  $('#ed-p-ok').onclick = () => {
+    const nuevasOpciones = q.opciones.map((o, k) => ({
+      t: el.querySelector('.ed-op-t[data-k="' + k + '"]').value.trim() || o.t,
+      ok: el.querySelector('.ed-ok[data-k="' + k + '"]').checked,
+      nota: el.querySelector('.ed-op-nota[data-k="' + k + '"]').value.trim()
+    }));
+    const marcadas = nuevasOpciones.filter(o => o.ok).length;
+    if(marcadas !== q.n){
+      toast('Esta pregunta pide marcar ' + q.n + (q.n === 1 ? ' opción correcta' : ' opciones correctas')
+        + ' y marcaste ' + marcadas + '.');
+      return;
+    }
+
+    const s = stats[q.id] = stats[q.id] || {seen:0, ok:0, flag:false};
+    const caso = $('#ed-p-caso').value;
+    const pregunta = $('#ed-p-pregunta').value.trim();
+    const area = $('#ed-p-area').value.trim();
+    const tipo = $('#ed-p-tipo').value.trim();
+    const examen = $('#ed-p-examen').value.trim();
+    if(caso !== q.caso) s.ovCaso = caso;
+    if(pregunta && pregunta !== q.pregunta) s.ovPregunta = pregunta;
+    if(area && area !== q.area) s.ovArea = area;
+    if(tipo && tipo !== q.tipo) s.ovTipo = tipo;
+    if(examen && examen !== q.examen) s.ovExamen = examen;
+    s.ovOpciones = nuevasOpciones;
+    aplicarOverridePregunta(q);
+    guardar();
+    el.remove(); mostrar();
+    toast('Guardado');
+  };
+}
+
+/* ═══ Banco: categorías (pantalla de entrada) ═══ */
+function contarBancoPorArea(){
+  const c = {};
+  BANCO.forEach(q => { if(!preguntaEliminada(q)) c[q.area] = (c[q.area] || 0) + 1; });
+  return c;
+}
+function contarBancoPorSind(){
+  const mapa = mapaSindPorPregunta();
+  const porId = {}; BANCO.forEach(q => porId[q.id] = q);
+  const c = {};
+  Object.entries(mapa).forEach(([qid, set]) => {
+    const q = porId[qid];
+    if(!q || preguntaEliminada(q)) return;
+    set.forEach(v => c[v] = (c[v] || 0) + 1);
+  });
+  return c;
+}
+function entrarBanco(lista){
+  if(!lista.length){ toast('No hay preguntas en esta categoría'); return; }
+  arrancar(lista, {banco:true, yaOrdenado:true});
+}
+function pintarBancoSind(){
+  const el = $('#bk-sind');
+  const q = normalizarTexto($('#bk-sind-buscar').value);
+  let entradas = Object.entries(contarBancoPorSind());
+  if(q) entradas = entradas.filter(([v]) => normalizarTexto(v).includes(q));
+  entradas.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  el.innerHTML = '';
+  if(!entradas.length){ el.innerHTML = '<p class="vacio">Ningún síndrome coincide con esa búsqueda.</p>'; return; }
+  entradas.forEach(([v, n]) => {
+    const row = document.createElement('div');
+    row.className = 'sindrow' + (n < 3 ? ' poca' : '');
+    row.innerHTML = '<span>' + escHtml(v) + '</span><span class="cnt">' + n + '</span>';
+    row.onclick = () => entrarBanco(BANCO.filter(qq => sindDePregunta(qq.id).has(v) && !preguntaEliminada(qq)));
+    el.appendChild(row);
+  });
+}
+function pintarBanco(){
+  const disponibles = BANCO.filter(q => !preguntaEliminada(q));
+  $('#bk-total-n').textContent = disponibles.length;
+  $('#bk-entrar-todas').onclick = () => entrarBanco(disponibles);
+
+  const areaEl = $('#bk-area'); areaEl.innerHTML = '';
+  Object.entries(contarBancoPorArea()).sort((a, b) => b[1] - a[1]).forEach(([v, n]) => {
+    const row = document.createElement('div');
+    row.className = 'sindrow';
+    row.innerHTML = '<span>' + escHtml(v) + '</span><span class="cnt">' + n + '</span>';
+    row.onclick = () => entrarBanco(BANCO.filter(q => q.area === v && !preguntaEliminada(q)));
+    areaEl.appendChild(row);
+  });
+
+  pintarBancoSind();
+
+  const nElim = BANCO.filter(preguntaEliminada).length;
+  $('#bk-papelera-n').textContent = nElim;
+  $('#bk-papelera-btn').disabled = !nElim;
+}
+async function verPapelera(){
+  const eliminadas = BANCO.filter(preguntaEliminada);
+  const items = eliminadas.map(q => ({
+    id: q.id,
+    nom: escHtml(((q.pregunta || q.caso || q.id).replace(/[=`_]/g,'').slice(0,70))) + '…'
+  }));
+  const id = await elegirDeLista('Papelera · tocá una para restaurarla', items);
+  if(!id) return;
+  delete stats[id].eliminada;
+  delete stats[id].eliminadaEn;
+  guardar();
+  toast('Restaurada');
+  pintarBanco();
 }
 
 /* ═══ corrección + tarjeta ═══ */
@@ -15933,6 +16248,7 @@ function avanzar(){
     guardarNota(actual.id, stats[actual.id].nota);
   }
   if(i + 1 < mazo.length){ i++; mostrar(); window.scrollTo({top:0}); }
+  else if(modoBanco){ pintarBanco(); toast('Terminaste esta categoría'); ir('#s-banco'); }
   else cerrar();
 }
 
@@ -17023,6 +17339,7 @@ function irA(destino){
     t.setAttribute('aria-pressed', t.dataset.go === destino));
   $('#strip').innerHTML = ''; $('#count').textContent = '';
   if(destino === 'biblioteca'){ pintarBiblioteca(); ir('#s-lib'); }
+  else if(destino === 'banco'){ pintarBanco(); ir('#s-banco'); }
   else if(destino === 'espacio'){
     medirAlturaNotas();
     carpetaSel = seccionSel = paginaSel = null;   // al abrir Notas se ve solo la lista de carpetas
@@ -17032,6 +17349,8 @@ function irA(destino){
   else { pintarChips(); pintarEstado(); ir('#s-setup'); }
 }
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => irA(t.dataset.go));
+$('#bk-sind-buscar').oninput = pintarBancoSind;
+$('#bk-papelera-btn').onclick = verPapelera;
 $('#lib-q').oninput = pintarBiblioteca;
 
 /* ═══ Notas: barra de formato, botón de editar, creación, divisores ═══ */
@@ -17223,7 +17542,8 @@ if(sb){
   sb.auth.onAuthStateChange((_evento, session) => manejarSesion(session));
 } else {
   pintarAuth();
-  cargar().then(cargarEspacio).then(cargarPreferenciasNotas).then(aplicarPreferenciasNotas).then(cargarBibPersonal);
+  cargar().then(cargarEspacio).then(cargarPreferenciasNotas).then(aplicarPreferenciasNotas).then(cargarBibPersonal)
+    .then(() => { aplicarOverridesPreguntas(); pintarChips(); pintarEstado(); });
 }
 </script>
 </body>
