@@ -331,6 +331,25 @@ textarea.ed-op-nota{min-height:44px;resize:vertical;font-size:13.5px;margin:0}
 .ed-clasif{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
 .ed-clasif .sh-in{margin:0}
 @media (max-width:520px){ .ed-clasif{grid-template-columns:1fr} }
+
+/* combo propio para área/tipo/examen: el "list" nativo de <input> depende
+   del navegador y en varios (Chrome/Windows entre ellos) la flechita para
+   desplegar las opciones apenas se ve o no responde bien al clic. */
+.combo{position:relative}
+.combo .sh-in{padding-right:32px}
+.combo-arrow{
+  position:absolute; right:2px; top:0; bottom:0; width:30px;
+  border:none; background:transparent; color:var(--ink3); cursor:pointer;
+  display:flex; align-items:center; justify-content:center; font-size:10px;
+}
+.combo-lista{
+  position:absolute; left:0; right:0; top:calc(100% - 10px); z-index:5;
+  max-height:190px; overflow-y:auto;
+  border:1px solid var(--line); border-radius:var(--r); background:var(--card);
+  box-shadow:0 8px 20px rgba(15,24,33,.18);
+}
+.combo-lista .sindrow{padding:8px 11px; font-size:14px}
+.combo-lista .sindrow .cnt{display:none}
 .sh-btns .act{flex:1;text-align:center}
 .act.pri.del{background:var(--pen);border-color:var(--pen);color:#fff}
 
@@ -15910,6 +15929,36 @@ function subrayarSeleccion(q){
   winSel.removeAllRanges();
   mostrar();
 }
+// combo propio para los campos de clasificación del modal de editar: se puede
+// escribir un valor nuevo o elegir uno de la lista con la flecha, que siempre
+// responde (a diferencia del <input list> nativo, cuya flechita varía mucho
+// entre navegadores y en algunos ni se ve).
+function comboBuscable(inputId, opciones){
+  const input = document.getElementById(inputId);
+  const lista = document.getElementById(inputId + '-lista');
+  const flecha = input.nextElementSibling;
+  const pintar = () => {
+    const q = normalizarTexto(input.value);
+    const filtradas = q ? opciones.filter(v => normalizarTexto(v).includes(q)) : opciones;
+    if(!filtradas.length){ lista.hidden = true; return; }
+    lista.innerHTML = filtradas.map(v =>
+      '<div class="sindrow" data-v="' + escAttr(v) + '">' + escHtml(v) + '</div>').join('');
+    lista.hidden = false;
+    lista.querySelectorAll('[data-v]').forEach(fila => {
+      // mousedown (no click): corre antes del blur del input, si no la lista
+      // se esconde antes de que el clic llegue a registrarse
+      fila.onmousedown = e => {
+        e.preventDefault();
+        input.value = fila.dataset.v;
+        lista.hidden = true;
+      };
+    });
+  };
+  input.addEventListener('focus', pintar);
+  input.addEventListener('input', pintar);
+  input.addEventListener('blur', () => setTimeout(() => { lista.hidden = true; }, 150));
+  if(flecha) flecha.onclick = () => { input.focus(); pintar(); };
+}
 function editarPregunta(q){
   const filaOpcion = (o, k) =>
     '<div class="ed-op-row">'
@@ -15919,8 +15968,13 @@ function editarPregunta(q){
       + '<textarea class="sh-in ed-op-nota" data-k="' + k + '" placeholder="Nota / explicación">'
       + escHtml(o.nota || '') + '</textarea>'
     + '</div>';
-  const opcionesDatalist = key => [...new Set(BANCO.map(x => x[key]))].filter(Boolean)
-    .map(v => '<option value="' + escAttr(v) + '">').join('');
+  const valoresDe = key => [...new Set(BANCO.map(x => x[key]))].filter(Boolean).sort();
+  const campoCombo = (id, label, valor) =>
+    '<div class="combo">'
+      + '<input class="sh-in" id="' + id + '" value="' + escAttr(valor) + '" placeholder="' + escAttr(label) + '" autocomplete="off">'
+      + '<button type="button" class="combo-arrow" tabindex="-1">▾</button>'
+      + '<div class="combo-lista sindlist" id="' + id + '-lista" hidden></div>'
+    + '</div>';
 
   const el = hoja('<p class="sh-t">Editar pregunta</p>'
     + '<p class="sh-s">' + escHtml(q.id) + ' — esto es personal tuyo, no toca el archivo original.</p>'
@@ -15931,16 +15985,17 @@ function editarPregunta(q){
     + '<label class="ed-lb">Opciones</label>'
     + '<div id="ed-p-opciones">' + q.opciones.map(filaOpcion).join('') + '</div>'
     + '<div class="ed-clasif">'
-      + '<input class="sh-in" id="ed-p-area" list="dl-p-area" value="' + escAttr(q.area) + '" placeholder="Área">'
-      + '<datalist id="dl-p-area">' + opcionesDatalist('area') + '</datalist>'
-      + '<input class="sh-in" id="ed-p-tipo" list="dl-p-tipo" value="' + escAttr(q.tipo) + '" placeholder="Tipo de decisión">'
-      + '<datalist id="dl-p-tipo">' + opcionesDatalist('tipo') + '</datalist>'
-      + '<input class="sh-in" id="ed-p-examen" list="dl-p-examen" value="' + escAttr(q.examen) + '" placeholder="Examen">'
-      + '<datalist id="dl-p-examen">' + opcionesDatalist('examen') + '</datalist>'
+      + campoCombo('ed-p-area', 'Área', q.area)
+      + campoCombo('ed-p-tipo', 'Tipo de decisión', q.tipo)
+      + campoCombo('ed-p-examen', 'Examen', q.examen)
     + '</div>'
     + '<div class="sh-btns"><button class="act pri" id="ed-p-ok">Guardar</button>'
     + '<button class="act" id="ed-p-reset">Restaurar original</button>'
     + '<button class="act" id="ed-p-no">Cancelar</button></div>');
+
+  comboBuscable('ed-p-area', valoresDe('area'));
+  comboBuscable('ed-p-tipo', valoresDe('tipo'));
+  comboBuscable('ed-p-examen', valoresDe('examen'));
 
   $('#ed-p-no').onclick = () => el.remove();
   el.onclick = e => { if(e.target === el) el.remove(); };
