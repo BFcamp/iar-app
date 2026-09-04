@@ -263,6 +263,19 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 .sh-mas{flex:0 0 auto;width:44px;border-left:1px solid var(--line);
   font-size:19px;color:var(--tag);text-align:center;line-height:1}
 
+/* selector de color de carpeta */
+.sh-colores{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:4px 0 14px}
+.sh-color{aspect-ratio:1;border-radius:50%;border:2px solid transparent;
+  cursor:pointer;padding:0;position:relative;
+  box-shadow:inset 0 0 0 1px rgba(15,24,33,.12)}
+.sh-color[aria-pressed="true"]{border-color:var(--ink);
+  box-shadow:inset 0 0 0 1px rgba(15,24,33,.12),0 0 0 2px var(--bg)}
+.sh-color:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.sh-libre{display:flex;align-items:center;gap:10px;font-size:14px;
+  color:var(--ink2);margin-bottom:13px}
+.sh-libre input[type="color"]{width:44px;height:32px;padding:0;cursor:pointer;
+  border:1px solid var(--line);border-radius:6px;background:var(--card)}
+
 .sh-in{width:100%;font:inherit;font-size:16px;border:1px solid var(--line);
   background:var(--card);color:var(--ink);border-radius:var(--r);
   padding:12px 13px;margin:6px 0 13px}
@@ -626,6 +639,12 @@ body.nt-editando .nt-hoja .nt-cuerpo{min-height:220px;}
 .nt-indice-lista{list-style:none;padding:0;margin:0;max-width:62ch;}
 .nt-indice-lista li{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid var(--nt-linea);font-family:var(--nt-texto);font-size:16px;}
 .nt-indice-lista .nt-n{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--nt-tenue);min-width:22px;font-variant-numeric:tabular-nums;}
+.nt-indice-lista .nt-punto{width:8px;height:8px;border-radius:50%;flex:none;
+  background:var(--nt-marca,#B9C4CE);margin-right:2px;}
+.nt-indice-lista .nt-color{border:none;background:none;cursor:pointer;padding:2px 5px;
+  font-size:13px;line-height:1;color:var(--nt-tenue);opacity:0;transition:opacity .12s;}
+.nt-indice-lista li:hover .nt-color,.nt-indice-lista .nt-color:focus-visible{opacity:1;}
+.nt-indice-lista .nt-color:hover{opacity:1;filter:brightness(.8);}
 .nt-indice-lista .nt-estado{margin-left:auto;font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11.5px;color:var(--nt-tenue);}
 
 .nt-vacio{display:flex;align-items:center;justify-content:center;height:100%;padding:40px;text-align:center;}
@@ -6592,9 +6611,10 @@ async function guardarEspacioRemoto(){
 
   const ahora = new Date().toISOString();
   const carpetas = [], paginas = [], referencias = [];
+  let sinMarca = false;
   Object.entries(ESP.nodos).forEach(([id, n]) => {
     if(n.tipo === 'carpeta'){
-      carpetas.push({ id, user_id: uid, nombre: n.nom, padre_id: padreId(n.padre), orden: n.orden || 0, actualizado: n.actualizado || ahora });
+      carpetas.push({ id, user_id: uid, nombre: n.nom, padre_id: padreId(n.padre), orden: n.orden || 0, marca: n.marca || null, actualizado: n.actualizado || ahora });
     } else if(n.tipo === 'nota' || n.tipo === 'indice'){
       // una página puede colgar de una carpeta (carpeta_id) o de otra página
       // (pagina_padre_id, las subpáginas) — son excluyentes entre sí
@@ -6629,8 +6649,20 @@ async function guardarEspacioRemoto(){
     // depender del orden en que aparecen padre e hijo dentro del mismo lote
     if(carpetas.length){
       const sinPadre = carpetas.map(c => ({ ...c, padre_id: null }));
-      let r = await sb.from('carpetas').upsert(sinPadre); if(r.error) throw r.error;
-      r = await sb.from('carpetas').upsert(carpetas); if(r.error) throw r.error;
+      let r = await sb.from('carpetas').upsert(sinPadre);
+      // marca (el color) es una columna nueva: si todavía no se corrió
+      // migrations/003, se reintenta sin ella. El color se pierde en la nube
+      // hasta que la corras, pero el árbol se sigue sincronizando.
+      if(r.error && /marca/i.test(r.error.message || '')){
+        sinMarca = true;
+        const pelar = c => { const { marca, ...resto } = c; return resto; };
+        r = await sb.from('carpetas').upsert(sinPadre.map(pelar));
+        if(r.error) throw r.error;
+        r = await sb.from('carpetas').upsert(carpetas.map(pelar));
+      } else if(!r.error){
+        r = await sb.from('carpetas').upsert(carpetas);
+      }
+      if(r.error) throw r.error;
     }
     if(paginas.length){
       // mismo motivo: una subpágina puede subir antes que su página madre
@@ -6669,6 +6701,11 @@ async function guardarEspacioRemoto(){
     }
 
     marcarEstado(true);
+    if(sinMarca && !guardarEspacioRemoto.avisoMarca){
+      guardarEspacioRemoto.avisoMarca = true;
+      console.warn('[iar] la tabla carpetas todavía no tiene la columna "marca": '
+        + 'los colores quedan solo en este dispositivo hasta correr migrations/003_carpetas_marca.sql');
+    }
     return true;
   }catch(err){
     console.error('[iar] no se pudo sincronizar el espacio con Supabase:', err);
@@ -6685,7 +6722,8 @@ async function cargarEspacioDeSupabase(){
   ]);
   const nodos = {};
   (cs || []).forEach(c => nodos[c.id] = {
-    tipo:'carpeta', nom:c.nombre, padre:c.padre_id || 'raiz', orden:c.orden || 0, actualizado:c.actualizado
+    tipo:'carpeta', nom:c.nombre, padre:c.padre_id || 'raiz', orden:c.orden || 0,
+    marca:c.marca || null, actualizado:c.actualizado
   });
   (ps || []).forEach(p => nodos[p.id] = {
     tipo:'nota', nom:p.titulo, padre:p.pagina_padre_id || p.carpeta_id || 'raiz',
@@ -7577,6 +7615,33 @@ function normalizarEstructuraNotas(){
 }
 
 /* ── crear ── */
+/* ── color de carpeta ──
+   Las carpetas se distinguen por un punto de color. Si nadie eligió uno,
+   no se cae al gris: se toma uno de la paleta según la posición de la
+   carpeta, así un espacio recién creado ya sale con colores distintos sin
+   escribir nada. En cuanto el usuario elige, queda en n.marca y manda ese.
+*/
+const PALETA_CARPETAS = [
+  '#C2410C', '#0E7490', '#4D7C0F', '#7E22CE', '#B91C1C',
+  '#0369A1', '#A16207', '#15803D', '#9D174D', '#4338CA'
+];
+function colorCarpeta(id){
+  const n = ESP.nodos[id];
+  if(n && n.marca) return n.marca;
+  const k = carpetasRaiz().indexOf(id);
+  return PALETA_CARPETAS[(k < 0 ? 0 : k) % PALETA_CARPETAS.length];
+}
+async function cambiarColorCarpeta(id){
+  const n = ESP.nodos[id];
+  if(!n) return;
+  const color = await elegirColor('Color de « ' + n.nom + ' »', colorCarpeta(id));
+  if(!color) return;
+  n.marca = color;
+  n.actualizado = new Date().toISOString();
+  guardarEspacio();
+  pintarNotas();
+}
+
 async function crearCarpetaRaiz(){
   const nom = await pedirTexto('Nombre de la carpeta');
   if(!nom) return;
@@ -7710,6 +7775,7 @@ function crearItemNota(cfg){
     const b = document.createElement('button');
     b.className = 'nt-mini' + (m.peligro ? ' nt-borrar' : '');
     b.textContent = m.icono; b.title = m.titulo;
+    if(m.color) b.style.color = m.color;
     b.onclick = e => { e.stopPropagation(); m.accion(); };
     el.appendChild(b);
   });
@@ -7740,7 +7806,11 @@ function pintarIndiceCarpetas(){
     const n = ESP.nodos[id];
     const nSecciones = seccionesDe(id).length;
     return '<li><span class="nt-n">' + (i + 1) + '</span>'
+      + '<span class="nt-punto" style="--nt-marca:' + colorCarpeta(id) + '"></span>'
       + '<a class="nt-vinculo" data-nt-abrir-carpeta="' + id + '">' + escHtml(n.nom) + '</a>'
+      + '<button class="nt-color" data-nt-color="' + id + '" title="Cambiar color"'
+      + ' style="color:' + colorCarpeta(id) + '"'
+      + ' aria-label="Cambiar el color de ' + escHtml(n.nom) + '">●</button>'
       + '<span class="nt-estado">' + nSecciones + (nSecciones === 1 ? ' sección' : ' secciones') + '</span></li>';
   }).join('');
   $('#ntIndiceCarpetas').innerHTML = '<div class="nt-indice-envoltorio">'
@@ -7759,6 +7829,9 @@ function pintarIndiceCarpetas(){
       asegurarSeleccion();
       pintarNotas();
     };
+  });
+  $('#ntIndiceCarpetas').querySelectorAll('[data-nt-color]').forEach(b => {
+    b.onclick = e => { e.stopPropagation(); cambiarColorCarpeta(b.dataset.ntColor); };
   });
   $('#ntIdxNuevaCarpeta').onclick = () => crearCarpetaRaiz();
   const bExp = $('#ntIdxExpandir');
@@ -7779,9 +7852,12 @@ function pintarGridNotas(){
   raices.forEach((id, i) => {
     const n = ESP.nodos[id];
     colC.appendChild(crearItemNota({
-      rotulo: n.nom, marca: n.marca || '#7E8C99', activo: id === carpetaSel,
+      rotulo: n.nom, marca: colorCarpeta(id), activo: id === carpetaSel,
       indice: i, zona: 'carpetas', arrastrable: true,
-      mini: [{ icono:'×', titulo:'Borrar carpeta', peligro:true, accion:() => borrarCarpetaRaiz(id) }],
+      mini: [
+        { icono:'●', titulo:'Cambiar color', color:colorCarpeta(id), accion:() => cambiarColorCarpeta(id) },
+        { icono:'×', titulo:'Borrar carpeta', peligro:true, accion:() => borrarCarpetaRaiz(id) }
+      ],
       alClic: () => { carpetaSel = id; seccionSel = null; paginaSel = null; asegurarSeleccion(); pintarNotas(); }
     }));
   });
@@ -7998,7 +8074,7 @@ function renderRef(n){
 }
 function renderHoja(nodo, id){
   if(!id || !carpetaSel || !ESP.nodos[carpetaSel]){ renderHojaVacia(nodo, 'Elegí una página para leerla acá.'); return; }
-  const cNom = ESP.nodos[carpetaSel].nom, cMarca = ESP.nodos[carpetaSel].marca || '#7E8C99';
+  const cNom = ESP.nodos[carpetaSel].nom, cMarca = colorCarpeta(carpetaSel);
 
   if(id.startsWith('indice:')){
     const secId = id.slice(7), sec = ESP.nodos[secId];
@@ -8097,6 +8173,37 @@ function pedirTexto(titulo, valor){
     $('#dlg-no').onclick = () => fin(null);
     el.onclick = e => { if(e.target === el) fin(null); };
     inp.onkeydown = e => { if(e.key === 'Enter') fin(inp.value.trim() || null); };
+  });
+}
+/* Selector de color: la paleta como botones, más un input nativo para
+   cualquier otro color. Devuelve el color elegido o null si se cancela. */
+function elegirColor(titulo, actual){
+  return new Promise(res => {
+    const swatches = PALETA_CARPETAS.map(c =>
+      '<button class="sh-color" data-color="' + c + '" style="background:' + c + '"'
+      + ' aria-pressed="' + (c.toLowerCase() === (actual || '').toLowerCase()) + '"'
+      + ' title="' + c + '" aria-label="Color ' + c + '"></button>').join('');
+    const el = hoja('<p class="sh-t">' + escHtml(titulo) + '</p>'
+      + '<div class="sh-colores">' + swatches + '</div>'
+      + '<label class="sh-libre">Otro color'
+      + '<input type="color" id="dlg-color" value="' + (actual || '#7E8C99') + '"></label>'
+      + '<div class="sh-btns"><button class="act pri" id="dlg-ok">Usar este color</button>'
+      + '<button class="act" id="dlg-no">Cancelar</button></div>');
+    let elegido = actual || '#7E8C99';
+    const libre = $('#dlg-color');
+    const marcar = c => {
+      elegido = c;
+      el.querySelectorAll('.sh-color').forEach(b =>
+        b.setAttribute('aria-pressed', b.dataset.color.toLowerCase() === c.toLowerCase()));
+    };
+    el.querySelectorAll('.sh-color').forEach(b => {
+      b.onclick = () => { libre.value = b.dataset.color; marcar(b.dataset.color); };
+    });
+    libre.oninput = () => marcar(libre.value);
+    const fin = v => { el.remove(); res(v); };
+    $('#dlg-ok').onclick = () => fin(elegido);
+    $('#dlg-no').onclick = () => fin(null);
+    el.onclick = e => { if(e.target === el) fin(null); };
   });
 }
 function confirmar(msg, etiqueta){
