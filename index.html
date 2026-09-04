@@ -66,6 +66,43 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 
 /* ── pestañas ── */
 .tabs{display:flex;gap:16px;margin-top:8px}
+/* chapa del modo laboratorio: tiene que ser imposible confundir en qué
+   ruta estás, por eso además del cartel el borde superior cambia de color */
+.lab-chapa{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:10.5px;
+  font-weight:700;letter-spacing:.09em;padding:3px 8px;border-radius:11px;
+  border:1px solid #B45309;background:#FEF3C7;color:#92400E;cursor:pointer;
+  line-height:1.4}
+.lab-chapa:hover{background:#FDE68A}
+body.en-lab .top{box-shadow:inset 0 3px 0 #B45309}
+
+/* modo profundo */
+.cadena{border:1px solid var(--line);border-radius:var(--r);background:var(--card);
+  padding:15px 16px;margin-top:13px}
+.cadena-eyebrow{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11px;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--tag);margin:0 0 7px}
+.cadena-mec{font-family:'IBM Plex Serif',serif;font-size:15.5px;line-height:1.5;
+  color:var(--ink);margin:0 0 13px}
+.cadena-fila{display:flex;gap:10px;font-size:14px;margin-bottom:7px;line-height:1.45}
+.cadena-fila b{flex:0 0 68px;color:var(--tag);font-size:12px;
+  font-family:'IBM Plex Sans Condensed',sans-serif;letter-spacing:.03em;
+  text-transform:uppercase;padding-top:2px}
+.cadena-fila span{color:var(--ink2)}
+.cadena-bloque{margin-top:12px}
+.cadena-bloque>b{display:block;font-size:12px;color:var(--tag);margin-bottom:5px;
+  font-family:'IBM Plex Sans Condensed',sans-serif;letter-spacing:.03em;
+  text-transform:uppercase}
+.cadena-bloque ul{margin:0;padding-left:0;list-style:none}
+.cadena-bloque li{font-size:14px;line-height:1.5;color:var(--ink2);
+  padding:6px 0 6px 11px;border-left:2px solid var(--line);margin-bottom:3px}
+.cadena-bloque li.ok{border-left-color:#15803D}
+.cadena-bloque li.no{border-left-color:#B91C1C}
+.cadena-bloque li i{font-style:normal;color:var(--tag);font-size:12.5px}
+.cadena-regla{font-family:'IBM Plex Serif',serif;font-size:15px;line-height:1.5;
+  color:var(--ink);margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line)}
+.cadena-aviso{font-size:13px;color:#92400E;background:#FEF3C7;border-radius:6px;
+  padding:8px 10px;margin:10px 0 0}
+.cadena-cargando,.cadena-error{font-size:14px;color:var(--ink2);padding:13px 0}
+.cadena-error{color:#B91C1C}
 .tab{
   font-size:14px;font-weight:600;color:var(--ink3);
   padding:0 0 7px;border-bottom:2px solid transparent;
@@ -14836,6 +14873,52 @@ BANCO.forEach(q => {
 });
 
 
+/* ═══ modo laboratorio ═══
+   Una ruta aparte para probar funciones nuevas sin tocar la app que usás
+   todos los días. Se prende con ?lab=1 en la URL y se apaga con ?lab=0.
+
+   Es un flag y no un archivo aparte a propósito: una copia de index.html en
+   otra carpeta obliga a aplicar cada arreglo dos veces y diverge en una
+   semana. Acá hay un solo archivo, un solo banco y un solo historial; lo
+   único que cambia es qué se muestra.
+
+   Todo lo experimental va detrás de `if(LAB)`. Mientras esté apagado, la app
+   se comporta exactamente como antes.
+*/
+const LAB = (() => {
+  const url = new URL(location.href);
+  const q = url.searchParams.get('lab');
+  const porHash = /(^|#|&)lab\b/.test(url.hash);
+  const porRuta = /\/lab\//.test(url.pathname);   // por si algún día se sirve así
+  let guardado = false;
+  try{ guardado = localStorage.getItem('iar-lab') === '1'; }catch(e){}
+  const activo = q === '0' ? false : (q === '1' || porHash || porRuta || guardado);
+  // se recuerda para que no haga falta arrastrar el parámetro en cada recarga
+  try{
+    if(q === '1') localStorage.setItem('iar-lab', '1');
+    if(q === '0') localStorage.removeItem('iar-lab');
+  }catch(e){}
+  return activo;
+})();
+function salirDelLab(){
+  try{ localStorage.removeItem('iar-lab'); }catch(e){}
+  const url = new URL(location.href);
+  url.searchParams.delete('lab');
+  url.hash = '';
+  location.href = url.toString();
+}
+function pintarLab(){
+  if(!LAB) return;
+  document.body.classList.add('en-lab');
+  const b = document.createElement('button');
+  b.className = 'lab-chapa';
+  b.textContent = 'LAB';
+  b.title = 'Estás en la ruta de pruebas. Clic para volver a la app estable.';
+  b.onclick = salirDelLab;
+  const destino = document.querySelector('.top-r');
+  if(destino) destino.insertBefore(b, destino.firstChild);
+}
+
 /* ═══ estado ═══ */
 const LETRAS = "abcdefghij";
 let stats = {};                 // {id:{seen,ok,flag,ultimaVista}}
@@ -15681,10 +15764,15 @@ function resolver(){
     + '<button class="next" id="btn-next">' + (i + 1 < mazo.length ? 'Siguiente' : 'Ver resultado') + '</button>'
     + '<button class="flag" id="btn-flag" aria-pressed="' + (!!flagged) + '">Marcar</button>'
     + '<button class="flag" id="btn-guardar">Guardar en…</button>'
+    // el modo profundo vive solo en la ruta de pruebas hasta que esté listo
+    + (LAB ? '<button class="flag" id="btn-profundo">Modo profundo</button>' : '')
     + '</div>';
+  if(LAB) html += '<div id="q-cadena" hidden></div>';
 
   const ex = $('#q-expl');
   ex.innerHTML = html; ex.hidden = false;
+
+  if(LAB && $('#btn-profundo')) $('#btn-profundo').onclick = () => verCadena(q);
 
   $('#btn-next').onclick = avanzar;
   $('#btn-guardar').onclick = () =>
@@ -15705,6 +15793,69 @@ function resolver(){
 
   registrarRespuesta(q, acierto);
   centrarEnCorrectas();
+}
+
+/* ═══ modo profundo (solo en la ruta ?lab=1) ═══
+   Pide la cadena fisiopatológica a la Edge Function `cadena` y la muestra
+   debajo del veredicto. La función cachea en la tabla `cadenas`, así que
+   pedir dos veces la misma pregunta no vuelve a llamar al modelo; igual se
+   guarda acá en memoria para no ir por red al volver a abrirla en la sesión.
+*/
+const cadenasVistas = {};
+async function verCadena(q){
+  const caja = $('#q-cadena');
+  if(!caja) return;
+  if(!caja.hidden){ caja.hidden = true; return; }   // segundo clic: se cierra
+  caja.hidden = false;
+
+  if(cadenasVistas[q.id]){ pintarCadena(caja, cadenasVistas[q.id]); return; }
+
+  caja.innerHTML = '<div class="cadena-cargando">Armando la cadena…</div>';
+  try{
+    const r = await fetch(SUPABASE_URL + '/functions/v1/cadena', {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: 'Bearer ' + ((sbSesion && sbSesion.access_token) || SUPABASE_ANON_KEY),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ pregunta_id: q.id })
+    });
+    const datos = await r.json();
+    if(!r.ok){
+      // la función devuelve un motivo en castellano: se muestra tal cual
+      caja.innerHTML = '<div class="cadena-error">' + escHtml(datos.error || 'No se pudo generar la cadena.') + '</div>';
+      return;
+    }
+    cadenasVistas[q.id] = datos;
+    pintarCadena(caja, datos);
+  }catch(err){
+    console.error('[iar] modo profundo:', err);
+    caja.innerHTML = '<div class="cadena-error">No se pudo contactar al servidor. '
+      + 'Probá de nuevo en un momento.</div>';
+  }
+}
+function pintarCadena(caja, d){
+  const lista = (arr, clase) => (arr || []).map(x =>
+    '<li class="' + clase + '"><b>' + escHtml(x.letra || '') + '</b> '
+    + (x.eslabon_cortado ? '<i>' + escHtml(x.eslabon_cortado) + '</i> · ' : '')
+    + (x.error ? '<i>' + escHtml(x.error.replace(/_/g, ' ')) + '</i> · ' : '')
+    + escHtml(x.texto || '') + '</li>').join('');
+
+  caja.innerHTML = '<div class="cadena">'
+    + '<p class="cadena-eyebrow">' + escHtml((d.mecanismo_indice || '').replace(/_/g, ' ')) + '</p>'
+    + '<p class="cadena-mec">' + escHtml(d.mecanismo || '') + '</p>'
+    + (d.amenaza ? '<div class="cadena-fila"><b>Amenaza</b><span>'
+        + escHtml(d.amenaza.blanco || '') + ' — ' + escHtml(d.amenaza.texto || '') + '</span></div>' : '')
+    + (d.ventana ? '<div class="cadena-fila"><b>Ventana</b><span>'
+        + escHtml(d.ventana.escala || '') + ' — ' + escHtml(d.ventana.texto || '') + '</span></div>' : '')
+    + '<div class="cadena-bloque"><b>Qué eslabón corta</b><ul>'
+        + lista(d.intervenciones, 'ok') + '</ul></div>'
+    + '<div class="cadena-bloque"><b>Por qué las demás no</b><ul>'
+        + lista(d.descartes, 'no') + '</ul></div>'
+    + '<p class="cadena-regla">' + escHtml(d.regla_transferible || '') + '</p>'
+    + (d.advertencia ? '<p class="cadena-aviso">' + escHtml(d.advertencia) + '</p>' : '')
+    + '</div>';
 }
 
 /* Deja a la vista la opción correcta (o todas, si son varias) junto con su
@@ -17017,6 +17168,7 @@ $('#btn-auth').onclick = async () => {
 };
 
 /* ═══ init ═══ */
+pintarLab();
 pintarChips();
 if(sb){
   sb.auth.onAuthStateChange((_evento, session) => manejarSesion(session));
