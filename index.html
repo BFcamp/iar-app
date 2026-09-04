@@ -6960,9 +6960,34 @@ function seleccion(){
     (filtro.confianza === 'todas' || (filtro.confianza === 'solo' ? esDudosa(q) : !esDudosa(q)))
   );
 }
+// Fisher-Yates real: sort(()=>Math.random()-.5) tiene sesgo conocido (los elementos
+// tienden a quedarse cerca de su posición original), por eso "al azar" terminaba
+// mostrando siempre un subconjunto parecido.
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+// Mezcla priorizando lo que nunca viste o hace más de 10 días que no ves, por
+// encima de lo visto recientemente — así "al azar" no repite siempre el mismo
+// puñado de preguntas por pura casualidad estadística.
+function mezclarPriorizando(lista){
+  const LIMITE_MS = 10 * 24 * 60 * 60 * 1000;
+  const nunca = [], haceMucho = [], recientes = [];
+  lista.forEach(q => {
+    const s = stats[q.id];
+    if(!s || !s.seen) nunca.push(q);
+    else if(!s.ultimaVista || (Date.now() - new Date(s.ultimaVista).getTime()) > LIMITE_MS) haceMucho.push(q);
+    else recientes.push(q);
+  });
+  return [...shuffle(nunca), ...shuffle(haceMucho), ...shuffle(recientes)];
+}
 function armarMazo(){
   let lista = seleccion();
-  if(filtro.orden === 'azar') lista = lista.slice().sort(() => Math.random() - .5);
+  if(filtro.orden === 'azar') lista = mezclarPriorizando(lista);
   if(filtro.cantidad) lista = lista.slice(0, filtro.cantidad);
   return lista;
 }
@@ -6976,7 +7001,7 @@ function ir(id){
 function arrancar(lista, opts){
   opts = opts || {};
   modoExamenActivo = !!opts.examen;
-  mazo = opts.yaOrdenado ? lista.slice() : lista.slice().sort(() => Math.random() - .5);
+  mazo = opts.yaOrdenado ? lista.slice() : shuffle(lista);
   i = 0; sesion.length = 0;
   pintarStrip(); mostrar(); ir('#s-q');
 }
@@ -7022,14 +7047,21 @@ function mostrar(){
     ? 'No se corrige hasta el final. ' + (q.n > 1 ? 'Marcá ' + q.n + ' opciones.' : 'Una sola opción.')
     : (q.n > 1 ? 'Marcá ' + q.n + ' opciones.' : 'Una sola opción.') + ' Podés responder con los números del teclado.';
 
+  // el orden de las opciones se mezcla en cada vista: si no, memorizás la posición
+  // ("la B") en vez del contenido cuando te vuelve a tocar la misma pregunta.
+  // `elegir`/`resolver` siguen trabajando con el índice real (o.dataset.real),
+  // la posición en pantalla es solo cosmética.
   const box = $('#q-opts'); box.innerHTML = '';
-  q.opciones.forEach((o, k) => {
+  const orden = shuffle(q.opciones.map((_, k) => k));
+  orden.forEach((realK, pos) => {
+    const o = q.opciones[realK];
     const w = document.createElement('div');
     w.className = 'opt-wrap';
     const b = document.createElement('button');
     b.className = 'opt';
-    b.innerHTML = '<span class="k">' + LETRAS[k] + ')</span><span class="tx">' + fmt(o.t) + '</span>';
-    b.onclick = () => elegir(k, b);
+    b.dataset.real = realK;
+    b.innerHTML = '<span class="k">' + LETRAS[pos] + ')</span><span class="tx">' + fmt(o.t) + '</span>';
+    b.onclick = () => elegir(realK, b);
     w.appendChild(b);
     box.appendChild(w);
   });
@@ -7074,7 +7106,8 @@ function resolver(){
     return;
   }
 
-  document.querySelectorAll('#q-opts .opt').forEach((b, k) => {
+  document.querySelectorAll('#q-opts .opt').forEach(b => {
+    const k = Number(b.dataset.real);
     b.disabled = true;
     b.classList.remove('sel');
     const esOk = q.opciones[k].ok, elegida = sel.has(k);
@@ -8363,11 +8396,11 @@ document.addEventListener('keydown', e => {
   if(tag === 'INPUT' || tag === 'TEXTAREA') return;
 
   if(e.key >= '1' && e.key <= '9'){
-    const k = Number(e.key) - 1;
+    const pos = Number(e.key) - 1;
     const botones = document.querySelectorAll('#q-opts .opt');
-    if(k < botones.length && !botones[k].disabled){
+    if(pos < botones.length && !botones[pos].disabled){
       e.preventDefault();
-      elegir(k, botones[k]);
+      elegir(Number(botones[pos].dataset.real), botones[pos]);
     }
     return;
   }
