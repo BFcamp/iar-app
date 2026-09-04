@@ -4201,7 +4201,7 @@
    "pagina": 58
   },
   "caso": "",
-  "pregunta": "tengoelmismo \nPedrito de 62 años consulta por un estado de anasarca de 40 días de evolución. \nAl interrogarlo refiere tener hipertensión arterial desde hace diez años. Está medicado con 5mg diarios de amlodipina y 25 mg diarios de hidroclorotiazida. Es diabético y se encuentra medicado, desde hace 11 años, con metformina 850 mg con el almuerzo y la cena. No posee otros antecedentes. \nAl examen físico los datos patológicos que se detectan son: T.A. 145/90 mm/hg. \nPalidez cutáneo-mucosa. Índice de masa corporal de 33, signos clínicos de ascitis, derrame pleural bilateral corroborados mediante ecografía y disminución de la agudeza visual. Edemas en miembros inferiores. El resto del examen es normal. \nCon los datos obtenidos hasta este momento, señale los dos diagnósticos que usted considera más probables (independientemente que haya otras posibles).",
+  "pregunta": "Pedrito de 62 años consulta por un estado de anasarca de 40 días de evolución. \nAl interrogarlo refiere tener hipertensión arterial desde hace diez años. Está medicado con 5mg diarios de amlodipina y 25 mg diarios de hidroclorotiazida. Es diabético y se encuentra medicado, desde hace 11 años, con metformina 850 mg con el almuerzo y la cena. No posee otros antecedentes. \nAl examen físico los datos patológicos que se detectan son: T.A. 145/90 mm/hg. \nPalidez cutáneo-mucosa. Índice de masa corporal de 33, signos clínicos de ascitis, derrame pleural bilateral corroborados mediante ecografía y disminución de la agudeza visual. Edemas en miembros inferiores. El resto del examen es normal. \nCon los datos obtenidos hasta este momento, señale los dos diagnósticos que usted considera más probables (independientemente que haya otras posibles).",
   "n": 2,
   "opciones": [
    {
@@ -4210,14 +4210,16 @@
     "nota": "Con 11 años de diabetes y HTA de larga data, la insuficiencia renal crónica es una de las hipótesis más probables."
    },
    {
-    "t": "Insuficiencia cardiaca b s f",
+    "t": "Insuficiencia cardiaca",
     "ok": false,
-    "nota": "La anasarca podría sugerir insuficiencia cardíaca, pero la combinación con proteinuria esperable por la nefropatía diabética hace más probable el síndrome nefrótico."
+    "nota": "La anasarca podría sugerir insuficiencia cardíaca, pero la combinación con proteinuria esperable por la nefropatía diabética hace más probable el síndrome nefrótico.",
+    "marca_fuente": "b s f"
    },
    {
-    "t": "Síndrome nefrótico b? creo que si, me llama porque es dbt lo mismo pienso… creo",
+    "t": "Síndrome nefrótico",
     "ok": true,
-    "nota": "La anasarca (ascitis, derrame pleural bilateral, edemas) en un diabético e hipertenso de larga data es el cuadro típico de síndrome nefrótico por nefropatía diabética."
+    "nota": "La anasarca (ascitis, derrame pleural bilateral, edemas) en un diabético e hipertenso de larga data es el cuadro típico de síndrome nefrótico por nefropatía diabética.",
+    "marca_fuente": "b? creo que si, me llama porque es dbt lo mismo pienso… creo"
    },
    {
     "t": "Síndrome nefrítico",
@@ -4230,7 +4232,8 @@
     "nota": "No hay signos de hepatopatía crónica que sustenten hipertensión portal como causa."
    }
   ],
-  "perla": "Diabetes + HTA de larga data con anasarca y baja de agudeza visual: pensá síndrome nefrótico sobre nefropatía diabética, casi siempre con retinopatía acompañando."
+  "perla": "Diabetes + HTA de larga data con anasarca y baja de agudeza visual: pensá síndrome nefrótico sobre nefropatía diabética, casi siempre con retinopatía acompañando.",
+  "marca_fuente": "tengoelmismo"
  },
  {
   "id": "pc-022",
@@ -4249,9 +4252,10 @@
   "n": 2,
   "opciones": [
    {
-    "t": "Proteinuria de 24 horas b s g f",
+    "t": "Proteinuria de 24 horas",
     "ok": true,
-    "nota": "La proteinuria de 24 horas cuantifica la pérdida proteica y confirma el rango nefrótico."
+    "nota": "La proteinuria de 24 horas cuantifica la pérdida proteica y confirma el rango nefrótico.",
+    "marca_fuente": "b s g f"
    },
    {
     "t": "Tiempo de protrombina",
@@ -4259,14 +4263,16 @@
     "nota": "El tiempo de protrombina no es prioritario para confirmar un síndrome nefrótico."
    },
    {
-    "t": "Clearence de creatinina g f",
+    "t": "Clearence de creatinina",
     "ok": true,
-    "nota": "El clearance de creatinina evalúa el grado de deterioro de la función renal, esperable tras años de diabetes e hipertensión."
+    "nota": "El clearance de creatinina evalúa el grado de deterioro de la función renal, esperable tras años de diabetes e hipertensión.",
+    "marca_fuente": "g f"
    },
    {
-    "t": "Hepatograma b s",
+    "t": "Hepatograma",
     "ok": false,
-    "nota": "El hepatograma no es prioritario: ya se orientó el cuadro hacia el riñón, no el hígado."
+    "nota": "El hepatograma no es prioritario: ya se orientó el cuadro hacia el riñón, no el hígado.",
+    "marca_fuente": "b s"
    },
    {
     "t": "Búsqueda de eritrocitos dismorficos en orina",
@@ -4293,9 +4299,10 @@
   "n": 2,
   "opciones": [
    {
-    "t": "Cambiar hidroclorotiazida por furosemida esta? s g b f",
+    "t": "Cambiar hidroclorotiazida por furosemida",
     "ok": true,
-    "nota": "Con compromiso renal, las tiazidas pierden eficacia; el diurético de asa (furosemida) es preferible para manejar el edema."
+    "nota": "Con compromiso renal, las tiazidas pierden eficacia; el diurético de asa (furosemida) es preferible para manejar el edema.",
+    "marca_fuente": "esta? s g b f"
    },
    {
     "t": "Agregar verapamilo",
@@ -4303,9 +4310,10 @@
     "nota": "El verapamilo no resuelve el problema principal (control glucémico y edema) en este momento."
    },
    {
-    "t": "Comenzar con insulinoterapia s b g f",
+    "t": "Comenzar con insulinoterapia",
     "ok": true,
-    "nota": "Una HbA1c de 10,8% con compromiso renal obliga a pasar a insulina, ya que los hipoglucemiantes orales quedan limitados o contraindicados."
+    "nota": "Una HbA1c de 10,8% con compromiso renal obliga a pasar a insulina, ya que los hipoglucemiantes orales quedan limitados o contraindicados.",
+    "marca_fuente": "s b g f"
    },
    {
     "t": "Aumentar la hidroclorotiazida",
@@ -4337,9 +4345,10 @@
   "n": 2,
   "opciones": [
    {
-    "t": "Homocisteina b f",
+    "t": "Homocisteina",
     "ok": true,
-    "nota": "La homocisteína se eleva en el déficit de vitamina B12, coherente con una anemia perniciosa asociada al vitíligo."
+    "nota": "La homocisteína se eleva en el déficit de vitamina B12, coherente con una anemia perniciosa asociada al vitíligo.",
+    "marca_fuente": "b f"
    },
    {
     "t": "Ferritina",
@@ -4347,9 +4356,10 @@
     "nota": "La ferritina orienta a depósitos de hierro, menos específica para la asociación vitíligo-gastritis autoinmune."
    },
    {
-    "t": "Anticuerpos anti células parietales b f",
+    "t": "Anticuerpos anti células parietales",
     "ok": true,
-    "nota": "El vitíligo se asocia clásicamente a gastritis autoinmune (anemia perniciosa); los anticuerpos anticélula parietal la estudian."
+    "nota": "El vitíligo se asocia clásicamente a gastritis autoinmune (anemia perniciosa); los anticuerpos anticélula parietal la estudian.",
+    "marca_fuente": "b f"
    },
    {
     "t": "Anticuerpos anti musculo liso",
@@ -4386,9 +4396,10 @@
     "nota": "Es una dosis alta de un antitiroideo, no corresponde si la sospecha (por la asociación autoinmune) es hipotiroidismo, no hipertiroidismo."
    },
    {
-    "t": "Levotiroxina 125 mcg f?",
+    "t": "Levotiroxina 125 mcg",
     "ok": false,
-    "nota": "Es una dosis plena de reemplazo, más apropiada para iniciar en un paciente joven y sano que en uno con antecedentes cardiovasculares."
+    "nota": "Es una dosis plena de reemplazo, más apropiada para iniciar en un paciente joven y sano que en uno con antecedentes cardiovasculares.",
+    "marca_fuente": "f?"
    },
    {
     "t": "Propiltiuracilo",
@@ -4401,9 +4412,10 @@
     "nota": "Es una dosis baja de un antitiroideo, no de reemplazo, no corresponde a la sospecha de hipotiroidismo."
    },
    {
-    "t": "Levotiroxina 50 mcg b f? creo q esta oka estaaa s",
+    "t": "Levotiroxina 50 mcg",
     "ok": true,
-    "nota": "Ante sospecha de hipotiroidismo autoinmune en un paciente con antecedentes cardiovasculares, se inicia con una dosis baja de levotiroxina para evitar precipitar isquemia."
+    "nota": "Ante sospecha de hipotiroidismo autoinmune en un paciente con antecedentes cardiovasculares, se inicia con una dosis baja de levotiroxina para evitar precipitar isquemia.",
+    "marca_fuente": "b f? creo q esta oka estaaa s"
    }
   ],
   "perla": "⚠️ Respuesta de confianza más baja del lote: se infiere continuidad con la pregunta anterior (vitíligo→autoinmunidad tiroidea), sin caso propio confirmado. En un paciente añoso o cardiópata, el reemplazo de hormona tiroidea siempre arranca con dosis bajas."
@@ -4445,9 +4457,10 @@
     "nota": "Una fibrocolonoscopía es un estudio, no una conducta terapéutica una vez confirmada la etiología."
    },
    {
-    "t": "Laparotomía exploradora esta?s f g",
+    "t": "Laparotomía exploradora",
     "ok": false,
-    "nota": "Una laparotomía exploradora es desproporcionada si ya se confirmó la etiología por estudios menos invasivos."
+    "nota": "Una laparotomía exploradora es desproporcionada si ya se confirmó la etiología por estudios menos invasivos.",
+    "marca_fuente": "esta?s f g"
    }
   ],
   "perla": "⚠️ Caso propio no disponible (el enunciado real no quedó capturado); se infiere por continuidad con la pregunta siguiente, que ya habla de 'la medicación' que recibe el paciente."
@@ -4474,9 +4487,10 @@
     "nota": "La calcemia no es el parámetro más comúnmente vigilado con antibioticoterapia."
    },
    {
-    "t": "Ionograma esta?s b g",
+    "t": "Ionograma",
     "ok": true,
-    "nota": "El ionograma es el parámetro de laboratorio más frecuentemente controlado durante muchos esquemas antibióticos, por su efecto sobre los electrolitos."
+    "nota": "El ionograma es el parámetro de laboratorio más frecuentemente controlado durante muchos esquemas antibióticos, por su efecto sobre los electrolitos.",
+    "marca_fuente": "esta?s b g"
    },
    {
     "t": "Tiempo de protrombina",
@@ -4518,9 +4532,10 @@
     "nota": "La lactulosa se usa en encefalopatía hepática o constipación, sin datos que lo sustenten en este caso."
    },
    {
-    "t": "Cilostazol esta? es para claudicacion intermitente ok",
+    "t": "Cilostazol",
     "ok": false,
-    "nota": "El cilostazol es para claudicación intermitente, sin relación con el cuadro de internación descripto."
+    "nota": "El cilostazol es para claudicación intermitente, sin relación con el cuadro de internación descripto.",
+    "marca_fuente": "esta? es para claudicacion intermitente ok"
    },
    {
     "t": "Benzodiacepinas",
@@ -4563,9 +4578,10 @@
     "nota": "El metronidazol es el nitroimidazol de uso empírico más frecuente para cuadros compatibles con infección anaeróbica o protozoaria."
    },
    {
-    "t": "Fluconazol f g b s",
+    "t": "Fluconazol",
     "ok": false,
-    "nota": "El fluconazol es antifúngico, sin datos que orienten a una etiología micótica."
+    "nota": "El fluconazol es antifúngico, sin datos que orienten a una etiología micótica.",
+    "marca_fuente": "f g b s"
    },
    {
     "t": "Doxicilina",

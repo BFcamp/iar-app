@@ -23,7 +23,10 @@ import {
 import { RESPUESTAS_PROPUESTAS } from "./lib/respuestas-propuestas.mjs";
 
 const args = process.argv.slice(2);
-const APLICAR = args.includes("--aplicar");
+const APLICAR = args.includes("--aplicar") || args.includes("--aplicar-marcas");
+// La separación de marcas es una propuesta aprobada a mano, no limpieza
+// automática: necesita su propio flag y nunca viaja dentro de --aplicar.
+const APLICAR_MARCAS = args.includes("--aplicar-marcas");
 const ARCHIVO = args.find((a) => !a.startsWith("--")) || "index.html";
 
 // ═══ canasta AUTO ═══
@@ -518,11 +521,30 @@ if (!APLICAR) {
 
 // ═══ --aplicar: solo AUTO ═══
 
+let marcasMovidas = 0;
 const normalizado = banco.map((q) => {
   const n = { ...q, opciones: q.opciones.map((o) => ({ ...o })) };
   n.caso = normalizar(q.caso).texto;
   n.pregunta = normalizar(q.pregunta).texto;
   n.opciones.forEach((o) => (o.t = normalizar(o.t).texto));
+
+  if (APLICAR_MARCAS) {
+    // la marca no se borra: pasa a marca_fuente, al lado del texto limpio
+    n.opciones.forEach((o) => {
+      const r = separarMarca(o.t);
+      if (!r) return;
+      o.t = r.util;
+      o.marca_fuente = r.marca;
+      marcasMovidas++;
+    });
+    const pref = (n.pregunta || "").match(MARCA_PREFIJO);
+    if (pref) {
+      n.pregunta = n.pregunta.replace(MARCA_PREFIJO, "").trim();
+      n.marca_fuente = pref[1];
+      marcasMovidas++;
+    }
+  }
+
   const cuar = CUARENTENA.find((f) => f.q.id === q.id);
   if (cuar) { n.revisar = true; n.motivo_revisar = cuar.motivos.join(" · "); }
   return n;
@@ -547,6 +569,20 @@ if (banco.some((q, k) => q.opciones.filter((o) => o.ok).length
   process.exit(1);
 }
 
+// Nada de lo que se sacó puede perderse: el texto limpio más la marca
+// tienen que reconstruir el original, palabra por palabra.
+const palabrasDe = (q) => palabras((q.caso || "") + " " + (q.pregunta || "") + " "
+  + (q.marca_fuente || "") + " "
+  + q.opciones.map((o) => (o.t || "") + " " + (o.marca_fuente || "")).join(" ")).sort().join(" ");
+const perdidas = banco.map((q, k) => [q.id, palabrasDe(q), palabrasDe(normalizado[k])])
+  .filter(([, a, b]) => a !== b);
+if (APLICAR_MARCAS && perdidas.length) {
+  console.error("ABORTADO: se perdió texto al separar marcas en " + perdidas.length
+    + " pregunta(s), p. ej. " + perdidas[0][0] + ". No se escribió nada.");
+  process.exit(1);
+}
+
 writeFileSync(join(RAIZ, "fuentes/banco-normalizado.json"), JSON.stringify(normalizado, null, 1));
 console.log("");
 console.log("escrito: fuentes/banco-normalizado.json (" + normalizado.length + " preguntas)");
+if (APLICAR_MARCAS) console.log("marcas movidas a marca_fuente: " + marcasMovidas);
