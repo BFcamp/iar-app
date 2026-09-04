@@ -565,6 +565,7 @@ u{text-decoration-color:var(--pen);text-decoration-thickness:2px;text-underline-
   padding:13px 15px;border-radius:var(--r);font-size:14px;font-weight:600;color:var(--ink2);
 }
 .flag[aria-pressed="true"]{background:var(--hl);border-color:#E0CE4B;color:#5C4A00}
+#btn-ficha[aria-pressed="true"]{background:var(--tag);border-color:var(--tag);color:#fff}
 
 /* ── cierre ── */
 .score{
@@ -777,6 +778,7 @@ body.nt-editando .nt-hoja .nt-cuerpo{min-height:220px;}
     <nav class="tabs" id="tabs">
       <button class="tab" data-go="practicar" aria-pressed="true">Practicar</button>
       <button class="tab" data-go="banco" aria-pressed="false">Banco</button>
+      <button class="tab" data-go="fichas" aria-pressed="false">Fichas</button>
       <button class="tab" data-go="biblioteca" aria-pressed="false">Biblioteca</button>
       <button class="tab" data-go="espacio" aria-pressed="false">Notas</button>
     </nav>
@@ -866,6 +868,43 @@ body.nt-editando .nt-hoja .nt-cuerpo{min-height:220px;}
     <div class="opts" id="q-opts"></div>
     <button class="confirm" id="btn-confirm" disabled>Confirmar respuesta</button>
     <div class="expl" id="q-expl" hidden></div>
+  </section>
+
+  <!-- FICHAS: categorías -->
+  <section class="screen" id="s-fichas">
+    <h1>Fichas</h1>
+    <p class="lede">Las reglas de conducta y notas que fuiste guardando desde Practicar y Banco, para repasarlas aparte, tocando "Fichas" en cualquier pregunta.</p>
+
+    <button class="start" id="fc-entrar-todas">Repasar todas · <span id="fc-total-n">0</span> fichas</button>
+    <p class="vacio" id="fc-vacio" hidden>Todavía no marcaste ninguna ficha. Andá a Practicar o Banco, respondé una pregunta y tocá "Fichas" para guardarla acá.</p>
+
+    <div class="group">
+      <p class="eyebrow">Por área</p>
+      <div class="sindlist" id="fc-area"></div>
+    </div>
+    <div class="group">
+      <p class="eyebrow">Por síndrome</p>
+      <input class="search" id="fc-sind-buscar" type="search" placeholder="Buscar un tema…" autocomplete="off">
+      <div class="sindlist" id="fc-sind"></div>
+    </div>
+  </section>
+
+  <!-- FICHA: repaso de a una -->
+  <section class="screen" id="s-ficha">
+    <div class="meta" id="fc-meta"></div>
+    <div class="caso" id="fc-caso"></div>
+    <p class="prompt" id="fc-prompt"></p>
+    <button class="confirm" id="fc-ver">Ver respuesta</button>
+    <div class="expl" id="fc-back" hidden>
+      <div class="perla"><b>Regla de conducta</b><p id="fc-perla"></p></div>
+      <div class="nota-personal"><label for="fc-nota">Tu nota</label>
+        <textarea id="fc-nota" placeholder="Anotá algo para vos sobre esta pregunta…"></textarea>
+      </div>
+      <div class="actions">
+        <button class="next" id="fc-siguiente">Siguiente</button>
+        <button class="flag" id="fc-quitar">Quitar de fichas</button>
+      </div>
+    </div>
   </section>
 
   <!-- BIBLIOTECA -->
@@ -15013,6 +15052,7 @@ const filtro = {
 let mazo = [], i = 0, sel = new Set(), respondida = false, notaTimer = null;
 let modoExamenActivo = false;
 let modoBanco = false;          // true = se entró desde la pestaña Banco (habilita editar/eliminar/subrayar)
+let mazoFichas = [], fi = 0;    // repaso de Fichas: mazo y posición propios, independientes de Practicar/Banco
 const sesion = [];              // [{id,area,tipo,acierto}]
 
 const $ = s => document.querySelector(s);
@@ -16108,6 +16148,113 @@ async function verPapelera(){
   pintarBanco();
 }
 
+/* ═══ Fichas: la regla de conducta + tu nota de cualquier pregunta, marcada
+   con el botón "Fichas" desde Practicar o Banco, para repasar aparte.
+   No duplica datos: solo guarda un flag en stats[q.id] (mismo patrón que
+   "Marcar"); la regla y la nota se leen de la pregunta y de stats como siempre.
+   El repaso usa su propio mazo/posición (mazoFichas/fi), separado del de
+   Practicar/Banco, y una pantalla propia (tarjeta con "Ver respuesta") en vez
+   de reusar #s-q, porque acá no se responde nada. Preparado para que más
+   adelante "Ver respuesta" se reemplace por botones de repetición espaciada. */
+const preguntaEsFicha = q => !!(stats[q.id] && stats[q.id].ficha) && !preguntaEliminada(q);
+function contarFichasPorArea(){
+  const c = {};
+  BANCO.forEach(q => { if(preguntaEsFicha(q)) c[q.area] = (c[q.area] || 0) + 1; });
+  return c;
+}
+function contarFichasPorSind(){
+  const mapa = mapaSindPorPregunta();
+  const porId = {}; BANCO.forEach(q => porId[q.id] = q);
+  const c = {};
+  Object.entries(mapa).forEach(([qid, set]) => {
+    const q = porId[qid];
+    if(!q || !preguntaEsFicha(q)) return;
+    set.forEach(v => c[v] = (c[v] || 0) + 1);
+  });
+  return c;
+}
+function pintarFichasSind(){
+  const el = $('#fc-sind');
+  const q = normalizarTexto($('#fc-sind-buscar').value);
+  let entradas = Object.entries(contarFichasPorSind());
+  if(q) entradas = entradas.filter(([v]) => normalizarTexto(v).includes(q));
+  entradas.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  el.innerHTML = '';
+  if(!entradas.length){ el.innerHTML = '<p class="vacio">Ningún síndrome coincide con esa búsqueda.</p>'; return; }
+  entradas.forEach(([v, n]) => {
+    const row = document.createElement('div');
+    row.className = 'sindrow';
+    row.innerHTML = '<span>' + escHtml(v) + '</span><span class="cnt">' + n + '</span>';
+    row.onclick = () => entrarFichas(BANCO.filter(qq => sindDePregunta(qq.id).has(v) && preguntaEsFicha(qq)));
+    el.appendChild(row);
+  });
+}
+function pintarFichas(){
+  const disponibles = BANCO.filter(preguntaEsFicha);
+  $('#fc-total-n').textContent = disponibles.length;
+  $('#fc-entrar-todas').onclick = () => entrarFichas(disponibles);
+  $('#fc-entrar-todas').disabled = !disponibles.length;
+  $('#fc-vacio').hidden = !!disponibles.length;
+
+  const areaEl = $('#fc-area'); areaEl.innerHTML = '';
+  Object.entries(contarFichasPorArea()).sort((a, b) => b[1] - a[1]).forEach(([v, n]) => {
+    const row = document.createElement('div');
+    row.className = 'sindrow';
+    row.innerHTML = '<span>' + escHtml(v) + '</span><span class="cnt">' + n + '</span>';
+    row.onclick = () => entrarFichas(BANCO.filter(q => q.area === v && preguntaEsFicha(q)));
+    areaEl.appendChild(row);
+  });
+
+  pintarFichasSind();
+}
+function entrarFichas(lista){
+  if(!lista.length){ toast('No hay fichas en esta categoría'); return; }
+  mazoFichas = shuffle(lista);
+  fi = 0;
+  ir('#s-ficha');
+  mostrarFicha();
+}
+function mostrarFicha(){
+  const q = mazoFichas[fi];
+  $('#fc-meta').textContent = (q.area || 'Fichas') + ' · ' + (fi + 1) + ' / ' + mazoFichas.length;
+  $('#fc-caso').innerHTML = fmt(q.caso || '');
+  $('#fc-caso').hidden = !q.caso;
+  $('#fc-prompt').innerHTML = fmt(q.pregunta || '');
+  $('#fc-back').hidden = true;
+  $('#fc-ver').hidden = false;
+  $('#fc-perla').innerHTML = fmt(q.perla || '');
+  $('#fc-nota').value = (stats[q.id] && stats[q.id].nota) || '';
+}
+function avanzarFicha(){
+  fi++;
+  if(fi >= mazoFichas.length){
+    toast('Repaso de fichas terminado');
+    irA('fichas');
+    return;
+  }
+  mostrarFicha();
+}
+$('#fc-ver').onclick = () => { $('#fc-back').hidden = false; $('#fc-ver').hidden = true; };
+$('#fc-siguiente').onclick = avanzarFicha;
+$('#fc-nota').oninput = e => {
+  const q = mazoFichas[fi];
+  const s = stats[q.id] = stats[q.id] || {seen:0, ok:0, flag:false};
+  s.nota = e.target.value;
+  clearTimeout(notaTimer);
+  notaTimer = setTimeout(() => guardarNota(q.id, s.nota), 2000);
+};
+$('#fc-quitar').onclick = () => {
+  const q = mazoFichas[fi];
+  const s = stats[q.id] = stats[q.id] || {seen:0, ok:0, flag:false};
+  s.ficha = false;
+  guardar();
+  toast('Quitada de fichas');
+  mazoFichas.splice(fi, 1);
+  if(!mazoFichas.length){ irA('fichas'); return; }
+  if(fi >= mazoFichas.length) fi = mazoFichas.length - 1;
+  mostrarFicha();
+};
+
 /* ═══ corrección + tarjeta ═══ */
 function resolver(){
   respondida = true;
@@ -16179,9 +16326,11 @@ function resolver(){
   }
 
   const flagged = stats[q.id] && stats[q.id].flag;
+  const enFichas = stats[q.id] && stats[q.id].ficha;
   html += '<div class="actions">'
     + '<button class="next" id="btn-next">' + (i + 1 < mazo.length ? 'Siguiente' : 'Ver resultado') + '</button>'
     + '<button class="flag" id="btn-flag" aria-pressed="' + (!!flagged) + '">Marcar</button>'
+    + '<button class="flag" id="btn-ficha" aria-pressed="' + (!!enFichas) + '">Fichas</button>'
     + '<button class="flag" id="btn-guardar">Guardar en…</button>'
     // el modo profundo vive solo en la ruta de pruebas hasta que esté listo
     + (LAB ? '<button class="flag" id="btn-profundo">Modo profundo</button>' : '')
@@ -16200,6 +16349,14 @@ function resolver(){
     const s = stats[q.id] = stats[q.id] || {seen:0, ok:0, flag:false};
     s.flag = !s.flag;
     e.currentTarget.setAttribute('aria-pressed', s.flag);
+    guardar();
+  };
+  $('#btn-ficha').onclick = e => {
+    const s = stats[q.id] = stats[q.id] || {seen:0, ok:0, flag:false};
+    s.ficha = !s.ficha;
+    if(s.ficha) s.fichaEn = Date.now();
+    e.currentTarget.setAttribute('aria-pressed', s.ficha);
+    toast(s.ficha ? 'Agregada a Fichas' : 'Quitada de Fichas');
     guardar();
   };
   $('#q-nota').oninput = e => {
@@ -16354,13 +16511,31 @@ function cerrar(){
    aparte, como una capa personal por encima, y nunca reescribe REGLAS.
 */
 let ejeLib = 'sind';
-const EJES = [['sind','Síndrome'],['area','Especialidad']];
-let bibPersonal = { reglas:{}, ordenGrupos:{ sind:{}, area:{} } };
+const EJES = [['sind','Síndrome'],['area','Especialidad'],['areaBanco','Esp. de Banco']];
+let bibPersonal = { reglas:{}, ordenGrupos:{ sind:{}, area:{}, areaBanco:{} } };
 let arrastreGrupo = null;
 
 function reglaEfectiva(r){
   const o = bibPersonal.reglas[r.id];
   return o ? Object.assign({}, r, o) : r;
+}
+// "Esp. de Banco": agrupa las mismas reglas por la especialidad que tienen HOY
+// las preguntas que las respaldan (r.qs), leída en vivo de BANCO — así una
+// reclasificación hecha desde Banco se ve acá sin tocar nada de la regla.
+// Es aditivo: no reemplaza "Especialidad", que es el campo propio y curado
+// de la regla; si una regla tiene preguntas de más de una especialidad de
+// Banco, se la agrupa por la que más se repite entre sus preguntas.
+function mapaAreaBancoPorId(){
+  const m = {};
+  BANCO.forEach(q => { if(!preguntaEliminada(q) && q.area) m[q.id] = q.area; });
+  return m;
+}
+function areaBancoDeRegla(r, mapa){
+  mapa = mapa || mapaAreaBancoPorId();
+  const cuentas = {};
+  r.qs.forEach(qid => { const a = mapa[qid]; if(a) cuentas[a] = (cuentas[a] || 0) + 1; });
+  const entradas = Object.entries(cuentas).sort((a, b) => b[1] - a[1]);
+  return entradas.length ? entradas[0][0] : 'Sin clasificar';
 }
 function guardarOverrideRegla(id, cambios){
   const r = REGLAS.find(x => x.id === id);
@@ -16526,8 +16701,10 @@ function pintarBiblioteca(){
   const out = $('#lib-out');
   if(!lista.length){ out.innerHTML = '<p class="empty">Ninguna regla coincide con esa búsqueda.</p>'; return; }
 
+  const mapaAreaBanco = ejeLib === 'areaBanco' ? mapaAreaBancoPorId() : null;
+  const claveDe = r => ejeLib === 'areaBanco' ? areaBancoDeRegla(r, mapaAreaBanco) : reglaEfectiva(r)[ejeLib];
   const grupos = {};
-  lista.forEach(r => { const eff = reglaEfectiva(r); (grupos[eff[ejeLib]] = grupos[eff[ejeLib]] || []).push(r); });
+  lista.forEach(r => { const g = claveDe(r); (grupos[g] = grupos[g] || []).push(r); });
   const entradas = ordenarGrupos(Object.entries(grupos), ejeLib);
 
   out.innerHTML = entradas.map(([g, rs]) => {
@@ -17401,6 +17578,7 @@ function irA(destino){
   $('#strip').innerHTML = ''; $('#count').textContent = '';
   if(destino === 'biblioteca'){ pintarBiblioteca(); ir('#s-lib'); }
   else if(destino === 'banco'){ pintarBanco(); ir('#s-banco'); }
+  else if(destino === 'fichas'){ pintarFichas(); ir('#s-fichas'); }
   else if(destino === 'espacio'){
     medirAlturaNotas();
     carpetaSel = seccionSel = paginaSel = null;   // al abrir Notas se ve solo la lista de carpetas
@@ -17412,6 +17590,7 @@ function irA(destino){
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => irA(t.dataset.go));
 $('#bk-sind-buscar').oninput = pintarBancoSind;
 $('#bk-papelera-btn').onclick = verPapelera;
+$('#fc-sind-buscar').oninput = pintarFichasSind;
 $('#lib-q').oninput = pintarBiblioteca;
 
 /* ═══ Notas: barra de formato, botón de editar, creación, divisores ═══ */
