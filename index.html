@@ -16465,16 +16465,22 @@ async function editarRegla(id){
   const sindicatos = q(REGLAS.map(x => reglaEfectiva(x).sind));
   const areas = q(REGLAS.map(x => reglaEfectiva(x).area));
   const esc = s => (s || '').replace(/"/g,'&quot;');
+  const campoCombo = (id, label, valor) =>
+    '<div class="combo">'
+      + '<input class="sh-in" id="' + id + '" value="' + esc(valor) + '" placeholder="' + esc(label) + '" autocomplete="off">'
+      + '<button type="button" class="combo-arrow" tabindex="-1">▾</button>'
+      + '<div class="combo-lista sindlist" id="' + id + '-lista" hidden></div>'
+    + '</div>';
   const el = hoja('<p class="sh-t">Editar regla</p>'
     + '<input class="sh-in" id="ed-r-nom" value="' + esc(eff.titulo) + '" placeholder="Nombre">'
-    + '<input class="sh-in" id="ed-r-sind" list="dl-r-sind" value="' + esc(eff.sind) + '" placeholder="Síndrome">'
-    + '<datalist id="dl-r-sind">' + sindicatos.map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>'
-    + '<input class="sh-in" id="ed-r-area" list="dl-r-area" value="' + esc(eff.area) + '" placeholder="Especialidad">'
-    + '<datalist id="dl-r-area">' + areas.map(a => '<option value="' + esc(a) + '">').join('') + '</datalist>'
+    + campoCombo('ed-r-sind', 'Síndrome', eff.sind)
+    + campoCombo('ed-r-area', 'Especialidad', eff.area)
     + '<p class="ayuda">Para el síndrome o la especialidad podés elegir uno existente o escribir uno nuevo.</p>'
     + '<div class="sh-btns"><button class="act pri" id="ed-r-ok">Guardar</button>'
     + '<button class="act" id="ed-r-reset">Restaurar original</button></div>'
     + '<button class="act" id="ed-r-no" style="width:100%;text-align:center;margin-top:8px">Cancelar</button>');
+  comboBuscable('ed-r-sind', sindicatos);
+  comboBuscable('ed-r-area', areas);
   const cerrar = () => el.remove();
   el.onclick = e => { if(e.target === el) cerrar(); };
   $('#ed-r-no').onclick = cerrar;
