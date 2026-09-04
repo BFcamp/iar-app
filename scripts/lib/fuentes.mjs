@@ -15,26 +15,45 @@ export const MARCADAS_MD = "fuentes/marcadas_PACK_CHOICE.md";
 
 export const leer = (rel) => readFileSync(join(RAIZ, rel), "utf8");
 
-// El banco no está en un JSON aparte: vive dentro de index.html, en los arrays
-// BANCO + BANCO2..BANCO5, que son un bloque de datos puro. Se corta por
-// marcador de texto, no por número de línea, y se evalúa aislado.
-const A = "const BANCO = [", Z = "BANCO5.forEach(q => BANCO.push(q));";
+// El banco va embebido en index.html. Hay dos formatos posibles:
+//   nuevo — un solo literal generado por scripts/inyectar-banco.mjs desde
+//           fuentes/banco-normalizado.json, entre marcadores de comentario
+//   viejo — los arrays BANCO + BANCO2..BANCO5 escritos a mano
+// Los dos son datos puros, así que se cortan por marcador de texto (nunca por
+// número de línea) y se evalúan aislados, sin cargar el resto de la app.
+const NUEVO_A = "const BANCO = ", NUEVO_Z = "/* fin del banco generado */";
+const VIEJO_A = "const BANCO = [", VIEJO_Z = "BANCO5.forEach(q => BANCO.push(q));";
+
 export function leerBanco(rel = "index.html") {
   const html = leer(rel);
-  const a = html.indexOf(A), z = html.indexOf(Z);
+
+  const zNuevo = html.indexOf(NUEVO_Z);
+  if (zNuevo >= 0) {
+    const aNuevo = html.lastIndexOf(NUEVO_A, zNuevo);
+    if (aNuevo < 0) throw new Error("Marcador de fin del banco sin su literal en " + rel);
+    return JSON.parse(html.slice(aNuevo + NUEVO_A.length, zNuevo).trim().replace(/;$/, ""));
+  }
+
+  const a = html.indexOf(VIEJO_A), z = html.indexOf(VIEJO_Z);
   if (a < 0 || z < 0) {
     throw new Error("No encontré el bloque del corpus en " + rel
       + ". ¿Cambiaron los nombres de BANCO/BANCO5?");
   }
   const ambito = {};
-  runInNewContext(html.slice(a, z + Z.length) + "\n;__b = BANCO;", ambito, { timeout: 10000 });
+  runInNewContext(html.slice(a, z + VIEJO_Z.length) + "\n;__b = BANCO;", ambito, { timeout: 10000 });
   return ambito.__b;
 }
 
-// Mismo criterio que esDudosa() en index.html.
+// Banderas que traía el banco original: respuesta reconstruida por IA, caso
+// reconstruido, respuesta pendiente o ausente en el pack. Son las que usa el
+// triage para elegir su universo de trabajo.
 export const BANDERAS = ["respuesta_ia_no_verificada", "caso_reconstruido",
   "respuesta_pendiente", "respuesta_correcta_no_disponible_en_el_pack"];
-export const esDudosa = (q) => BANDERAS.some((f) => q[f]);
+
+// Mismo criterio que esDudosa() en index.html, y tiene que seguir siéndolo:
+// si se separan, la app y la tabla `preguntas` marcarían cosas distintas.
+// `revisar` lo pone validar-preguntas.mjs sobre las de cuarentena.
+export const esDudosa = (q) => BANDERAS.some((f) => q[f]) || !!q.revisar;
 
 export const limpio = (t) => (t || "").replace(/\s+/g, " ").trim();
 export const recorte = (t, n) => (limpio(t).length > n ? limpio(t).slice(0, n) + "…" : limpio(t));

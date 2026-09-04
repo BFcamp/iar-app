@@ -11,39 +11,13 @@
 // así que correrlo dos veces pisa las mismas filas en vez de duplicar.
 // Va contra PostgREST con fetch para no depender de node_modules.
 
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
-import { runInNewContext } from "node:vm";
+import { RAIZ, leerBanco, esDudosa } from "./lib/fuentes.mjs";
 
-const RAIZ = join(dirname(fileURLToPath(import.meta.url)), "..");
 const LOTE = 100;
 
 const URL_BASE = process.env.SUPABASE_URL || "https://ovngisrvygbzuamikguz.supabase.co";
 const CLAVE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SECO = process.argv.includes("--dry");
-
-const INICIO = "const BANCO = [";
-const FIN = "BANCO5.forEach(q => BANCO.push(q));";
-
-function leerBanco() {
-  const html = readFileSync(join(RAIZ, "index.html"), "utf8");
-  const a = html.indexOf(INICIO);
-  const z = html.indexOf(FIN);
-  if (a < 0 || z < 0) {
-    throw new Error("No encontré el bloque del corpus en index.html. ¿Cambiaron los nombres de BANCO/BANCO5?");
-  }
-  const bloque = html.slice(a, z + FIN.length);
-  const ambito = {};
-  runInNewContext(bloque + "\n;__banco = BANCO;", ambito, { timeout: 10000 });
-  return ambito.__banco;
-}
-
-// Mismo criterio que esDudosa() en index.html: la respuesta viene de una
-// reconstrucción de IA sin verificar, o directamente no hay correcta
-// asignada. Son las que la Edge Function rechaza.
-const esDudosa = (q) => !!(q.respuesta_ia_no_verificada || q.caso_reconstruido
-  || q.respuesta_pendiente || q.respuesta_correcta_no_disponible_en_el_pack);
 
 function aFila(q) {
   return {
