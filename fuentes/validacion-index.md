@@ -5,7 +5,7 @@ Generado por `scripts/validar-preguntas.mjs`. 257 preguntas leídas.
 | canasta | preguntas | qué pasa con ellas |
 |---|---|---|
 | AUTO | 0 | se corrigen con `--aplicar`, sin preguntar |
-| PROPUESTA | 51 | esperan OK, no se aplican |
+| PROPUESTA | 58 | esperan OK, no se aplican |
 | CUARENTENA | 16 | entran con `revisar: true` y motivo |
 
 ## Campo `bloque` — distinct crudo y mapeo propuesto
@@ -28,7 +28,7 @@ preguntas movidas, así que el vocabulario no se congela desde acá. Esto es el
 Transformaciones determinísticas y reversibles. Todas pasaron las invariantes:
 mismas cifras, mismas opciones, ninguna respuesta marcada, ninguna palabra nueva.
 
-## Canasta PROPUESTA — 51 preguntas
+## Canasta PROPUESTA — 58 preguntas
 
 Nada de esto se aplica sin tu OK. `--aplicar` no las toca.
 
@@ -61,12 +61,108 @@ Nada de esto se aplica sin tu OK. `--aplicar` no las toca.
   - **confianza:** media
   - **antes:** `Indica que inicialmente comiencen con vegetales y que luego incorporen otros grupos de`
 
+### `pc-021` · Clínica Médica
+
+- **detecté:** 3 marca(s) tipeadas por quien rindió, capturadas en la capa de texto · 1 de 2 opción(es) correcta(s) las llevan
+  - **propongo:** mover la marca a `marca_fuente` y dejar la opción limpia. NO borrarla: es la única trazabilidad de por qué esa opción quedó marcada como correcta
+  - **fuente:** el propio texto del banco · bloque pc-021..pc-030, pp. 58-63 del pack
+  - **confianza:** alta
+  - `opciones[1] · b`
+    - antes:   `Insuficiencia cardiaca b s f`
+    - después: `Insuficiencia cardiaca`  · marca_fuente: `b s f`
+  - `opciones[2] · c` **(correcta)**
+    - antes:   `Síndrome nefrótico b? creo que si, me llama porque es dbt lo mismo pienso… creo`
+    - después: `Síndrome nefrótico`  · marca_fuente: `b? creo que si, me llama porque es dbt lo mismo pienso… creo`
+  - `enunciado`
+    - antes:   `Pedrito de 62 años consulta por un estado de anasarca de 40 días de evolución. 
+Al interrogarlo refiere tener hipertensión arterial desde hace diez años. Está medicado con 5mg diarios de amlodipina y 25 mg diarios de hidroclorotiazida. Es diabético y se encuentra medicado, desde hace 11 años, con metformina 850 mg con el almuerzo y la cena. No posee otros antecedentes. 
+Al examen físico los datos patológicos que se detectan son: T.A. 145/90 mm/hg. 
+Palidez cutáneo-mucosa. Índice de masa corporal de 33, signos clínicos de ascitis, derrame pleural bilateral corroborados mediante ecografía y disminución de la agudeza visual. Edemas en miembros inferiores. El resto del examen es normal. 
+Con los datos obtenidos hasta este momento, señale los dos diagnósticos que usted considera más probables (independientemente que haya otras posibles). tengoelmismo`
+    - después: `Pedrito de 62 años consulta por un estado de anasarca de 40 días de evolución. 
+Al interrogarlo refiere tener hipertensión arterial desde hace diez años. Está medicado con 5mg diarios de amlodipina y 25 mg diarios de hidroclorotiazida. Es diabético y se encuentra medicado, desde hace 11 años, con metformina 850 mg con el almuerzo y la cena. No posee otros antecedentes. 
+Al examen físico los datos patológicos que se detectan son: T.A. 145/90 mm/hg. 
+Palidez cutáneo-mucosa. Índice de masa corporal de 33, signos clínicos de ascitis, derrame pleural bilateral corroborados mediante ecografía y disminución de la agudeza visual. Edemas en miembros inferiores. El resto del examen es normal. 
+Con los datos obtenidos hasta este momento, señale los dos diagnósticos que usted considera más probables (independientemente que haya otras posibles).`  · marca_fuente: `tengoelmismo`
+
+### `pc-022` · Clínica Médica
+
+- **detecté:** 3 marca(s) tipeadas por quien rindió, capturadas en la capa de texto · 2 de 2 opción(es) correcta(s) las llevan — todas las correctas y ninguna otra
+  - **propongo:** mover la marca a `marca_fuente` y dejar la opción limpia. NO borrarla: es la única trazabilidad de por qué esa opción quedó marcada como correcta. Ojo: acá el `ok` probablemente se derivó de estas marcas, no de la fuente
+  - **fuente:** el propio texto del banco · bloque pc-021..pc-030, pp. 58-63 del pack
+  - **confianza:** alta
+  - `opciones[0] · a` **(correcta)**
+    - antes:   `Proteinuria de 24 horas b s g f`
+    - después: `Proteinuria de 24 horas`  · marca_fuente: `b s g f`
+  - `opciones[2] · c` **(correcta)**
+    - antes:   `Clearence de creatinina g f`
+    - después: `Clearence de creatinina`  · marca_fuente: `g f`
+  - `opciones[3] · d`
+    - antes:   `Hepatograma b s`
+    - después: `Hepatograma`  · marca_fuente: `b s`
+
+### `pc-023` · Clínica Médica
+
+- **detecté:** 2 marca(s) tipeadas por quien rindió, capturadas en la capa de texto · 2 de 2 opción(es) correcta(s) las llevan — todas las correctas y ninguna otra
+  - **propongo:** mover la marca a `marca_fuente` y dejar la opción limpia. NO borrarla: es la única trazabilidad de por qué esa opción quedó marcada como correcta. Ojo: acá el `ok` probablemente se derivó de estas marcas, no de la fuente
+  - **fuente:** el propio texto del banco · bloque pc-021..pc-030, pp. 58-63 del pack
+  - **confianza:** alta
+  - `opciones[0] · a` **(correcta)**
+    - antes:   `Cambiar hidroclorotiazida por furosemida esta? s g b f`
+    - después: `Cambiar hidroclorotiazida por furosemida`  · marca_fuente: `esta? s g b f`
+  - `opciones[2] · c` **(correcta)**
+    - antes:   `Comenzar con insulinoterapia s b g f`
+    - después: `Comenzar con insulinoterapia`  · marca_fuente: `s b g f`
+
+### `pc-024` · Clínica Médica
+
+- **detecté:** 2 marca(s) tipeadas por quien rindió, capturadas en la capa de texto · 2 de 2 opción(es) correcta(s) las llevan — todas las correctas y ninguna otra
+  - **propongo:** mover la marca a `marca_fuente` y dejar la opción limpia. NO borrarla: es la única trazabilidad de por qué esa opción quedó marcada como correcta. Ojo: acá el `ok` probablemente se derivó de estas marcas, no de la fuente
+  - **fuente:** el propio texto del banco · bloque pc-021..pc-030, pp. 58-63 del pack
+  - **confianza:** alta
+  - `opciones[0] · a` **(correcta)**
+    - antes:   `Homocisteina b f`
+    - después: `Homocisteina`  · marca_fuente: `b f`
+  - `opciones[2] · c` **(correcta)**
+    - antes:   `Anticuerpos anti células parietales b f`
+    - después: `Anticuerpos anti células parietales`  · marca_fuente: `b f`
+
+### `pc-025` · Clínica Médica
+
+- **detecté:** 2 marca(s) tipeadas por quien rindió, capturadas en la capa de texto · 1 de 1 opción(es) correcta(s) las llevan — todas las correctas y ninguna otra
+  - **propongo:** mover la marca a `marca_fuente` y dejar la opción limpia. NO borrarla: es la única trazabilidad de por qué esa opción quedó marcada como correcta. Ojo: acá el `ok` probablemente se derivó de estas marcas, no de la fuente
+  - **fuente:** el propio texto del banco · bloque pc-021..pc-030, pp. 58-63 del pack
+  - **confianza:** alta
+  - `opciones[1] · b`
+    - antes:   `Levotiroxina 125 mcg f?`
+    - después: `Levotiroxina 125 mcg`  · marca_fuente: `f?`
+  - `opciones[4] · e` **(correcta)**
+    - antes:   `Levotiroxina 50 mcg b f? creo q esta oka estaaa s`
+    - después: `Levotiroxina 50 mcg`  · marca_fuente: `b f? creo q esta oka estaaa s`
+
+### `pc-027` · Clínica Médica
+
+- **detecté:** 1 marca(s) tipeadas por quien rindió, capturadas en la capa de texto
+  - **propongo:** mover la marca a `marca_fuente` y dejar la opción limpia. NO borrarla: es la única trazabilidad de por qué esa opción quedó marcada como correcta
+  - **fuente:** el propio texto del banco · bloque pc-021..pc-030, pp. 58-63 del pack
+  - **confianza:** alta
+  - `opciones[4] · e`
+    - antes:   `Laparotomía exploradora esta?s f g`
+    - después: `Laparotomía exploradora`  · marca_fuente: `esta?s f g`
+
 ### `pc-028` · Clínica Médica
 
 - **detecté:** el enunciado cuelga de un paciente que no aparece en el caso adjunto
   - **propongo:** recuperar la viñeta de la pregunta encadenada
   - **fuente:** fuentes/pack_preguntas_texto.md
   - **confianza:** media
+- **detecté:** 1 marca(s) tipeadas por quien rindió, capturadas en la capa de texto · 1 de 1 opción(es) correcta(s) las llevan — todas las correctas y ninguna otra
+  - **propongo:** mover la marca a `marca_fuente` y dejar la opción limpia. NO borrarla: es la única trazabilidad de por qué esa opción quedó marcada como correcta. Ojo: acá el `ok` probablemente se derivó de estas marcas, no de la fuente
+  - **fuente:** el propio texto del banco · bloque pc-021..pc-030, pp. 58-63 del pack
+  - **confianza:** alta
+  - `opciones[1] · b` **(correcta)**
+    - antes:   `Ionograma esta?s b g`
+    - después: `Ionograma`  · marca_fuente: `esta?s b g`
 
 ### `pc-029` · Clínica Médica
 
@@ -74,6 +170,23 @@ Nada de esto se aplica sin tu OK. `--aplicar` no las toca.
   - **propongo:** recuperar la viñeta de la pregunta encadenada
   - **fuente:** fuentes/pack_preguntas_texto.md
   - **confianza:** media
+- **detecté:** 1 marca(s) tipeadas por quien rindió, capturadas en la capa de texto
+  - **propongo:** mover la marca a `marca_fuente` y dejar la opción limpia. NO borrarla: es la única trazabilidad de por qué esa opción quedó marcada como correcta
+  - **fuente:** el propio texto del banco · bloque pc-021..pc-030, pp. 58-63 del pack
+  - **confianza:** alta
+  - `opciones[1] · b`
+    - antes:   `Cilostazol esta? es para claudicacion intermitente ok`
+    - después: `Cilostazol`  · marca_fuente: `esta? es para claudicacion intermitente ok`
+
+### `pc-030` · Clínica Médica
+
+- **detecté:** 1 marca(s) tipeadas por quien rindió, capturadas en la capa de texto
+  - **propongo:** mover la marca a `marca_fuente` y dejar la opción limpia. NO borrarla: es la única trazabilidad de por qué esa opción quedó marcada como correcta
+  - **fuente:** el propio texto del banco · bloque pc-021..pc-030, pp. 58-63 del pack
+  - **confianza:** alta
+  - `opciones[1] · b`
+    - antes:   `Fluconazol f g b s`
+    - después: `Fluconazol`  · marca_fuente: `f g b s`
 
 ### `pc-073` · Clínica Médica
 

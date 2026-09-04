@@ -18,7 +18,7 @@ import { writeFileSync } from "node:fs";
 import { join, basename } from "node:path";
 import {
   RAIZ, PACK_JSON, PACK_MD, IMG_MD, MARCADAS_MD, leer, leerBanco,
-  limpio, recorte, BOILER, BOILER_G, solape, bloquesImagen,
+  limpio, recorte, BOILER, BOILER_G, solape, bloquesImagen, LETRAS,
 } from "./lib/fuentes.mjs";
 import { RESPUESTAS_PROPUESTAS } from "./lib/respuestas-propuestas.mjs";
 
@@ -153,6 +153,50 @@ function nPedido(texto) {
   return NUM[v] || parseInt(v, 10) || null;
 }
 
+// ═══ marcas tipeadas por quien rindió ═══
+// En el bloque pc-021..pc-030 la capa de texto del PDF capturó lo que la
+// persona iba escribiendo encima: letras sueltas (b, s, f, g) y comentarios
+// en primera persona, pegados al final del texto de la opción.
+//
+// No son basura al azar: 9 de las 13 caen sobre la opción marcada como
+// correcta, y en cinco preguntas coinciden exactamente con TODAS las
+// correctas y con ninguna otra. Son las marcas con las que iba señalando qué
+// creía. Por eso no se borran: se separan a `marca_fuente`, que es la única
+// trazabilidad que existe sobre de dónde salió ese `ok`.
+// Una letra suelta NO alcanza como señal: se lleva puesta la "g" de gramos
+// ("Fosfomicina 3 g"), la G de Inmunoglobulina G y la B de anfotericina B.
+// Lo que sí distingue una marca es una de estas tres formas:
+const MARCAS = [
+  /\s+esta\s*\?\s*s?\b/i,                    // "esta?", "esta?s"
+  // "b?", "f?", y la tira que a veces la precede: "b f?" corta desde la "b".
+  // El "?" es lo que hace segura la regla: ninguna unidad ni nombre de
+  // fármaco termina en una letra suelta seguida de signo de pregunta.
+  /\s+(?:\b[bsfgr]\b\s+)*\b[bsfgr]\s*\?/i,
+  /\s+(?:\b[bsfgr]\b[\s,]*){2,}$/i,          // tira de letras, pegada al final
+  /\s+(?:creo|me\s+llama|pienso|oka|ok|muñiz)\b/i,
+];
+// ruido pegado al principio del enunciado
+const MARCA_PREFIJO = /^\s*(tengoelmismo|idem|lo\s+mismo)\s+/i;
+
+// Separa texto útil de marca. Devuelve null si no hay marca, o si sacarla
+// dejaría la opción irreconocible o le cambiaría alguna cifra.
+function separarMarca(texto) {
+  const t = texto || "";
+  // corta desde la marca que aparezca más temprano
+  let corte = -1;
+  for (const rx of MARCAS) {
+    const m = t.match(rx);
+    if (m && (corte < 0 || m.index < corte)) corte = m.index;
+  }
+  if (corte < 0) return null;
+  const util = t.slice(0, corte).trim();
+  const marca = t.slice(corte).trim();
+  if (util.length < 4) return null;              // no queda opción
+  if (cifras(util) !== cifras(t)) return null;   // la marca se llevaba una cifra
+  if (!/[a-záéíóúñ]{3}/i.test(util)) return null;
+  return { util, marca };
+}
+
 // Cifras que huelen a error de OCR. Flag, nunca fix: las mira el usuario.
 function cifrasSospechosas(texto) {
   const out = [];
@@ -279,6 +323,40 @@ for (const q of banco) {
       antes: recorte(cortadas[0].t, 90),
     });
   }
+  // marcas tipeadas: se separan, no se borran
+  const conMarca = [];
+  q.opciones.forEach((o, k) => {
+    const r = separarMarca(o.t);
+    if (r) conMarca.push({ campo: 'opciones[' + k + '] · ' + LETRAS[k], ok: !!o.ok, ...r });
+  });
+  const prefijo = (q.pregunta || '').match(MARCA_PREFIJO);
+  if (prefijo) {
+    conMarca.push({
+      campo: 'enunciado', ok: false,
+      util: q.pregunta.replace(MARCA_PREFIJO, '').trim(),
+      marca: prefijo[1],
+    });
+  }
+  if (conMarca.length) {
+    const sobreCorrectas = conMarca.filter((c) => c.ok).length;
+    const correctas = q.opciones.filter((o) => o.ok).length;
+    propuestas.push({
+      que: conMarca.length + ' marca(s) tipeadas por quien rindió, capturadas en la capa de texto'
+        + (sobreCorrectas
+            ? ' · ' + sobreCorrectas + ' de ' + correctas + ' opción(es) correcta(s) las llevan'
+              + (sobreCorrectas === correctas ? ' — todas las correctas y ninguna otra' : '')
+            : ''),
+      propongo: 'mover la marca a `marca_fuente` y dejar la opción limpia. NO borrarla: '
+        + 'es la única trazabilidad de por qué esa opción quedó marcada como correcta'
+        + (sobreCorrectas === correctas && correctas > 0
+            ? '. Ojo: acá el `ok` probablemente se derivó de estas marcas, no de la fuente'
+            : ''),
+      confianza: 'alta',
+      fuente: 'el propio texto del banco · bloque pc-021..pc-030, pp. 58-63 del pack',
+      detalle: conMarca,
+    });
+  }
+
   if (resp && resp.enOpciones === true) {
     propuestas.push({
       que: "pregunta sin correcta marcada en el banco",
@@ -366,6 +444,11 @@ PROPUESTA.forEach((f) => {
     L.push("  - **fuente:** " + pr.fuente);
     L.push("  - **confianza:** " + pr.confianza);
     if (pr.antes) L.push("  - **antes:** `" + pr.antes + "`");
+    (pr.detalle || []).forEach((d) => {
+      L.push("  - `" + d.campo + "`" + (d.ok ? " **(correcta)**" : ""));
+      L.push("    - antes:   `" + d.util + " " + d.marca + "`");
+      L.push("    - después: `" + d.util + "`  · marca_fuente: `" + d.marca + "`");
+    });
   });
   L.push("");
 });
