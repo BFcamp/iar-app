@@ -16095,7 +16095,11 @@ function contarBancoPorSind(){
 }
 function entrarBanco(lista){
   if(!lista.length){ toast('No hay preguntas en esta categoría'); return; }
-  arrancar(lista, {banco:true, yaOrdenado:true});
+  // Antes se entraba en el orden fijo del archivo: cada vez que abrías la misma
+  // categoría arrancabas por las mismas primeras preguntas. mezclarPriorizando
+  // la desordena y prioriza las que nunca viste o hace tiempo que no ves, igual
+  // que "Practicar al azar", para no repetir siempre el mismo puñado.
+  arrancar(mezclarPriorizando(lista), {banco:true, yaOrdenado:true});
 }
 function pintarBancoSind(){
   const el = $('#bk-sind');
