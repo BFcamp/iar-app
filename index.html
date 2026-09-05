@@ -378,6 +378,12 @@ h1{
   font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
   color:var(--ink3);margin:0 0 8px;
 }
+.eyebrow-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.eyebrow-row .eyebrow{margin:0 0 8px}
+.eyebrow-add{flex:0 0 auto;border:1px solid var(--line);background:var(--card);
+  color:var(--ink2);font-size:11.5px;font-weight:700;border-radius:20px;
+  padding:5px 12px 8px;cursor:pointer;margin-bottom:4px}
+.eyebrow-add:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
 
 /* selector de mazo */
 .group{margin-bottom:22px}
@@ -410,11 +416,13 @@ h1{
 .sindrow.poca .cnt{color:var(--pen)}
 .sindrow.poca[aria-pressed="true"] .cnt{color:#F3C6CC}
 .sindlist .vacio{padding:14px 12px;color:var(--ink3);font-size:13.5px}
-.sindrow-edit{flex:0 0 auto;border:none;background:transparent;color:var(--ink3);
-  font-size:14px;line-height:1;padding:4px 6px;margin:-4px -4px -4px 0;border-radius:6px;cursor:pointer}
-.sindrow-edit:hover{background:rgba(15,24,33,.08);color:var(--ink)}
-.sindrow[aria-pressed="true"] .sindrow-edit{color:#C7D0D8}
-.sindrow[aria-pressed="true"] .sindrow-edit:hover{background:rgba(255,255,255,.15);color:#fff}
+.sindrow-right{display:flex;align-items:center;gap:2px;flex:0 0 auto}
+.sindrow-btn{flex:0 0 auto;border:none;background:transparent;color:var(--ink3);
+  font-size:14px;line-height:1;padding:4px 6px;border-radius:6px;cursor:pointer}
+.sindrow-btn:hover{background:rgba(15,24,33,.08);color:var(--ink)}
+.sindrow-btn.del:hover{color:var(--pen)}
+.sindrow[aria-pressed="true"] .sindrow-btn{color:#C7D0D8}
+.sindrow[aria-pressed="true"] .sindrow-btn:hover{background:rgba(255,255,255,.15);color:#fff}
 
 .start{
   width:100%;background:var(--ink);color:#fff;
@@ -853,7 +861,10 @@ body.nt-editando .nt-hoja .nt-cuerpo{min-height:220px;}
     <button class="start" id="bk-entrar-todas">Entrar por todas · <span id="bk-total-n">0</span> preguntas</button>
 
     <div class="group">
-      <p class="eyebrow">Por área</p>
+      <div class="eyebrow-row">
+        <p class="eyebrow">Por área</p>
+        <button type="button" class="eyebrow-add" id="bk-area-nueva" title="Crear una especialidad nueva">+ Especialidad</button>
+      </div>
       <div class="sindlist" id="bk-area"></div>
     </div>
     <div class="group">
@@ -15203,7 +15214,7 @@ const Store = {
 function logCarga(){
   console.log('[iar] almacenamiento detectado:', DEPOSITO);
   console.log('[iar] preguntas con progreso restauradas desde "' + DEPOSITO + '":',
-    Object.keys(stats).length, 'de', BANCO.length);
+    Object.keys(stats).filter(k => !k.startsWith('__')).length, 'de', BANCO.length);
 }
 async function cargar(){
   if(DEPOSITO === 'memoria') await Store.detectar();
@@ -15231,7 +15242,7 @@ async function guardarNota(id, texto){
 }
 
 function pintarEstado(){
-  const vistas = Object.keys(stats).length;
+  const vistas = Object.keys(stats).filter(k => !k.startsWith('__')).length;
   const donde = {
     supabase: 'sincronizado con tu cuenta' + (sbSesion ? ' (' + sbSesion.user.email + ')' : ''),
     claude:  'progreso guardado en este chat',
@@ -16049,7 +16060,7 @@ function editarPregunta(q){
     + '<button class="act" id="ed-p-reset">Restaurar original</button>'
     + '<button class="act" id="ed-p-no">Cancelar</button></div>');
 
-  comboBuscable('ed-p-area', valoresDe('area'));
+  comboBuscable('ed-p-area', todasLasEspecialidades());
   comboBuscable('ed-p-tipo', valoresDe('tipo'));
   comboBuscable('ed-p-examen', valoresDe('examen'));
 
@@ -16139,16 +16150,26 @@ function pintarBanco(){
   $('#bk-entrar-todas').onclick = () => entrarBanco(disponibles);
 
   const areaEl = $('#bk-area'); areaEl.innerHTML = '';
-  Object.entries(contarBancoPorArea()).sort((a, b) => b[1] - a[1]).forEach(([v, n]) => {
+  // las especialidades creadas a mano (todavía sin preguntas) se listan igual,
+  // con 0 — así quedan disponibles para elegir al editar una pregunta aunque
+  // todavía no tengan ninguna asignada.
+  const conteos = contarBancoPorArea();
+  todasLasEspecialidades().forEach(v => { if(!(v in conteos)) conteos[v] = 0; });
+  Object.entries(conteos).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).forEach(([v, n]) => {
     const row = document.createElement('div');
     row.className = 'sindrow';
     row.innerHTML = '<span>' + escHtml(v) + '</span>'
-      + '<button type="button" class="sindrow-edit" title="Renombrar o fusionar esta especialidad">✏️</button>'
-      + '<span class="cnt">' + n + '</span>';
+      + '<span class="sindrow-right">'
+        + '<span class="cnt">' + n + '</span>'
+        + '<button type="button" class="sindrow-btn edit" title="Renombrar o fusionar esta especialidad">✏️</button>'
+        + '<button type="button" class="sindrow-btn del" title="Eliminar esta especialidad">🗑️</button>'
+      + '</span>';
     row.onclick = () => entrarBanco(BANCO.filter(q => q.area === v && !preguntaEliminada(q)));
-    row.querySelector('.sindrow-edit').onclick = e => { e.stopPropagation(); renombrarEspecialidad(v, n); };
+    row.querySelector('.edit').onclick = e => { e.stopPropagation(); renombrarEspecialidad(v, n); };
+    row.querySelector('.del').onclick = e => { e.stopPropagation(); eliminarEspecialidad(v, n); };
     areaEl.appendChild(row);
   });
+  $('#bk-area-nueva').onclick = crearEspecialidad;
 
   pintarBancoSind();
 
@@ -16156,23 +16177,67 @@ function pintarBanco(){
   $('#bk-papelera-n').textContent = nElim;
   $('#bk-papelera-btn').disabled = !nElim;
 }
+// especialidades "vacías" creadas a mano desde Banco (todavía sin ninguna
+// pregunta asignada): viven adentro de stats, bajo una clave reservada que
+// arranca con "__" para no confundirse con un id de pregunta real — así se
+// guardan con el mismo mecanismo que el resto del progreso (local, Claude o
+// Supabase) sin tocar el archivo original ni pedir una tabla nueva.
+const CLAVE_ESP_EXTRA = '__especialidadesExtra';
+function especialidadesExtra(){ return Object.keys(stats[CLAVE_ESP_EXTRA] || {}); }
+function todasLasEspecialidades(){
+  const deBanco = [...new Set(BANCO.map(x => x.area))].filter(Boolean);
+  return [...new Set([...deBanco, ...especialidadesExtra()])].sort();
+}
+function campoComboClasif(id, label, valor){
+  return '<div class="combo">'
+    + '<input class="sh-in" id="' + id + '" value="' + escAttr(valor) + '" placeholder="' + escAttr(label) + '" autocomplete="off">'
+    + '<button type="button" class="combo-arrow" tabindex="-1">▾</button>'
+    + '<div class="combo-lista sindlist" id="' + id + '-lista" hidden></div>'
+  + '</div>';
+}
+// crear una especialidad nueva y vacía: queda disponible en la lista y en los
+// combos de "editar pregunta" para elegirla, aunque todavía no tenga ninguna
+// pregunta asignada.
+function crearEspecialidad(){
+  const el = hoja('<p class="sh-t">Nueva especialidad</p>'
+    + '<label class="ed-lb">Nombre</label>'
+    + '<input class="sh-in" id="nv-esp" placeholder="Especialidad" autocomplete="off">'
+    + '<p class="ayuda">Queda disponible para elegirla al editar una pregunta, aunque todavía no tenga ninguna.</p>'
+    + '<div class="sh-btns"><button class="act pri" id="nv-esp-ok">Crear</button>'
+    + '<button class="act" id="nv-esp-no">Cancelar</button></div>');
+  const cerrar = () => el.remove();
+  el.onclick = e => { if(e.target === el) cerrar(); };
+  $('#nv-esp-no').onclick = cerrar;
+  $('#nv-esp').focus();
+  const crear = () => {
+    const nombre = $('#nv-esp').value.trim();
+    if(!nombre) return;
+    if(todasLasEspecialidades().some(v => normalizarTexto(v) === normalizarTexto(nombre))){
+      toast('Ya existe una especialidad con ese nombre');
+      return;
+    }
+    stats[CLAVE_ESP_EXTRA] = stats[CLAVE_ESP_EXTRA] || {};
+    stats[CLAVE_ESP_EXTRA][nombre] = true;
+    guardar();
+    cerrar();
+    toast('Especialidad creada');
+    pintarBanco();
+  };
+  $('#nv-esp-ok').onclick = crear;
+  $('#nv-esp').addEventListener('keydown', e => { if(e.key === 'Enter') crear(); });
+}
 // renombrar (o fusionar) una especialidad completa desde la pantalla de
 // categorías de Banco: aplica la nueva especialidad a todas las preguntas que
 // hoy tienen `v`, como un override personal más por pregunta (mismo mecanismo
-// que editar una pregunta suelta). Elegir una especialidad ya existente la
-// fusiona con esa; escribir una nueva la renombra.
+// que editar una pregunta suelta), y renombra la entrada si era una de las
+// creadas a mano. Elegir una especialidad ya existente la fusiona con esa;
+// escribir una nueva la renombra.
 function renombrarEspecialidad(v, n){
-  const opciones = [...new Set(BANCO.map(x => x.area))].filter(Boolean).filter(a => a !== v).sort();
-  const campoCombo = (id, label, valor) =>
-    '<div class="combo">'
-      + '<input class="sh-in" id="' + id + '" value="' + escAttr(valor) + '" placeholder="' + escAttr(label) + '" autocomplete="off">'
-      + '<button type="button" class="combo-arrow" tabindex="-1">▾</button>'
-      + '<div class="combo-lista sindlist" id="' + id + '-lista" hidden></div>'
-    + '</div>';
+  const opciones = todasLasEspecialidades().filter(a => a !== v);
   const el = hoja('<p class="sh-t">Renombrar especialidad</p>'
     + '<p class="sh-s">«' + escHtml(v) + '» · ' + n + (n === 1 ? ' pregunta' : ' preguntas') + '</p>'
     + '<label class="ed-lb">Especialidad</label>'
-    + campoCombo('rn-esp', 'Especialidad', v)
+    + campoComboClasif('rn-esp', 'Especialidad', v)
     + '<p class="ayuda">Elegí una especialidad ya existente para fusionar «' + escHtml(v) + '» con ella, '
       + 'o escribí un nombre nuevo para renombrarla. Se aplica a las ' + n + (n === 1 ? ' pregunta.' : ' preguntas.')
     + '</p>'
@@ -16190,11 +16255,29 @@ function renombrarEspecialidad(v, n){
       s.ovArea = nuevo;
       aplicarOverridePregunta(q);
     });
+    if(stats[CLAVE_ESP_EXTRA] && stats[CLAVE_ESP_EXTRA][v]){
+      delete stats[CLAVE_ESP_EXTRA][v];
+      stats[CLAVE_ESP_EXTRA][nuevo] = true;
+    }
     guardar();
     cerrar();
     toast('Especialidad actualizada');
     pintarBanco();
   };
+}
+// eliminar solo tiene sentido para una especialidad vacía (creada a mano y sin
+// preguntas todavía): si ya tiene preguntas asignadas, hay que fusionarla con
+// otra desde el lápiz antes — no se descarta contenido real desde acá.
+function eliminarEspecialidad(v, n){
+  if(n > 0){
+    toast('Tiene ' + n + (n === 1 ? ' pregunta' : ' preguntas')
+      + '. Fusionala con otra especialidad (✏️) antes de eliminarla.');
+    return;
+  }
+  if(stats[CLAVE_ESP_EXTRA]) delete stats[CLAVE_ESP_EXTRA][v];
+  guardar();
+  toast('Especialidad eliminada');
+  pintarBanco();
 }
 async function verPapelera(){
   const eliminadas = BANCO.filter(preguntaEliminada);
