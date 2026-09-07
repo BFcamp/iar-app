@@ -766,6 +766,8 @@ body.nt-editando .nt-hoja .nt-cuerpo{min-height:220px;}
 .nt-ops-ro li.nt-buena{border-color:#0E6C54;background:#E7F2EE;color:#0E6C54;font-weight:600;}
 .nt-trampa{border-left:2px solid var(--nt-peligro);padding-left:12px;margin:0 0 12px;font-size:14px;line-height:1.5;color:#2A3742;font-family:'IBM Plex Sans Condensed',sans-serif;max-width:62ch;}
 .nt-trampa b{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--nt-peligro);margin-bottom:3px;}
+.nt-explic{border-left:2px solid #0E6C54;padding-left:12px;margin:0 0 12px;font-size:14px;line-height:1.5;color:#2A3742;font-family:'IBM Plex Sans Condensed',sans-serif;max-width:62ch;}
+.nt-explic b{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#0E6C54;margin-bottom:3px;}
 
 @media (max-width:1080px){ .nt-hoja{padding:26px 28px 50px;} }
 @media (max-width:760px){
@@ -17477,10 +17479,16 @@ function renderRef(n){
   }
   const q = BANCO.find(x => x.id === n.refId);
   if(!q) return '<p style="color:var(--nt-tenue)">Este elemento ya no existe en la biblioteca.</p>';
+  const correcta = q.opciones.find(o => o.ok);
   return '<div class="nt-caso-ro">' + fmt(q.caso).replace(/<\/?mark>/g,'') + '</div>'
     + '<p class="nt-pregunta-ro">' + escHtml(q.pregunta) + '</p>'
     + '<ul class="nt-ops-ro">' + q.opciones.map(o =>
-        '<li' + (o.ok ? ' class="nt-buena"' : '') + '>' + escHtml(o.t) + '</li>').join('') + '</ul>';
+        '<li' + (o.ok ? ' class="nt-buena"' : '') + '>' + escHtml(o.t) + '</li>').join('') + '</ul>'
+    // la misma explicación que se ve al responder en Practicar (por qué es
+    // correcta esa opción + la regla de conducta) para que la referencia
+    // guardada sirva para repasar sin tener que volver a resolver la pregunta.
+    + (correcta && correcta.nota ? '<div class="nt-explic"><b>Por qué es correcta</b>' + fmt(correcta.nota) + '</div>' : '')
+    + (q.perla ? '<div class="nt-conducta"><div class="nt-quien">Regla de conducta</div><p>' + fmt(q.perla) + '</p></div>' : '');
 }
 function renderHoja(nodo, id){
   if(!id || !carpetaSel || !ESP.nodos[carpetaSel]){ renderHojaVacia(nodo, 'Elegí una página para leerla acá.'); return; }
