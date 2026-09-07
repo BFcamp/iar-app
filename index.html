@@ -15917,11 +15917,16 @@ function pintarToolbarBanco(q){
   if(!modoBanco){ box.hidden = true; box.innerHTML = ''; return; }
   box.hidden = false;
   const editada = preguntaEditada(q);
+  // en Banco se lee y edita sin necesidad de contestar, así que hace falta una
+  // forma de pasar a la siguiente sin responder (a diferencia de Practicar,
+  // donde "Siguiente" recién aparece después de confirmar una respuesta).
   box.innerHTML =
-      '<button id="bk-editar">✏️ Editar</button>'
+      '<button id="bk-siguiente">Siguiente ›</button>'
+    + '<button id="bk-editar">✏️ Editar</button>'
     + '<button id="bk-subrayar">Subrayar selección</button>'
     + (editada ? '<button class="ov" id="bk-restaurar">↺ Restaurar original</button>' : '')
     + '<button class="del" id="bk-eliminar">🗑 Eliminar</button>';
+  $('#bk-siguiente').onclick = avanzar;
   $('#bk-editar').onclick = () => editarPregunta(q);
   $('#bk-subrayar').onclick = () => subrayarSeleccion(q);
   if(editada) $('#bk-restaurar').onclick = () => {
